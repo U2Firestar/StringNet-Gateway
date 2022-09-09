@@ -15,8 +15,10 @@ Features:
 This project builds upon following librarys:
 - [Pygubu-Designer](https://github.com/alejandroautalan/pygubu-designer) from alejandroautalan @ Github
 - [Eclipse Paho™ MQTT Python Client](https://github.com/eclipse/paho.mqtt.python) from eclipse @ Github
-- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github
+- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github (modified)
 
 Therefor special thanks!
 
-Note: It's advised to install "homie" (v4) via pip to get all neccessary packages and then uninstall the package again. Pygubu is also already preinstalled in this project
+Note: It's advised to install "homie" (v4) via pip to get all neccessary packages and then uninstall the package again as homie and Pygubu are already preinstalled in this project.
+
+![Works with Homie](https://github.com/U2Firestar/StringNet-RF-APIandGUI/blob/main/works-with-homie.png)
