@@ -17,3 +17,5 @@ This project builds upon following librarys:
 - homie4 from mjcumming @ Github: https://github.com/mjcumming/Homie4
 
 Therefor special thanks!
+
+Note: It's advised to install "homie" (v4) via pip to get all neccessary packages and then uninstall the package again. Pygubu is also already preinstalled in this project
