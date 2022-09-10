@@ -11,6 +11,7 @@ Features:
 - MQTT-bridge to generically translate between StringNet und MQTT 
 -- Implemented transmission-queues and echo-filtering
 -	HomieV4 – compatible bridge from and to StringNet
+- Autostart - useful for long-term application
 
 This project builds upon following librarys:
 - [Pygubu-Designer](https://github.com/alejandroautalan/pygubu-designer) from alejandroautalan @ Github
