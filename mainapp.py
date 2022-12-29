@@ -873,6 +873,7 @@ class MainApp:
 
             # Start actual bridge
             global GLOBAL_USB_SEND_QUERY
+            GLOBAL_USB_SEND_QUERY.append("{LIFESIGN;TELLDEV}") # Bugfix: Autostart wasn't working due to buggy first message
             self.BRIDGE_KILLSIGNAL = False
             self.busviewerChanged = True  # Variable for ViewerOutput
             # Burst Discovery at startup
