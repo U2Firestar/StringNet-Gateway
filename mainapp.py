@@ -1,17 +1,18 @@
 aboutprogramm = "\
 Softwarepurpose: StringNet-IoT-Gateway - Serial Programming, Setup and Control\n\
-Version: 2.0.0 16.04.2022\n\
+Version: 2.0.1 29.12.2022\n\
 Author: Emil Sedlacek (U2Firestar, Firestar)\n\
 Supported by: UAS Technikum Vienna and 3S-Sedlak\n\
 Note: See Documentation, commandtable in Excle and Firmware-Source-Files for more info!\n\n\
 Patch-Notes (Firmware and GUI) since 1.0.x:\n\
     - Revised Firmware and StringNet-Protocol\n\
     -- Dynamic digital Objects and Remotes\n\
-    -- FWs default is set to P2P (no addresses) and 60sec lifesignal-interval\n\
     - Temporary UDP-support removed because of pure security-risk\n\
     - Added full GUI and HomieV4-Support\n\
     -- In the modified Python HomieV4-Library the \"Switch\"-Element is the latest nodes state\n\
-    -- This Library is backwards-compatible to OpenHABs HomieV3-Implementation\
+    -- This Library is backwards-compatible to OpenHABs HomieV3-Implementation\n\
+    - FW Settings: Addressing disabled, Lifesign every 60sec\n\
+    - KNOWN BUG: UI crashes after around 24h due to X-Server-Bug\
 "
 
 # Special thanks and Credits to:
@@ -50,7 +51,7 @@ from homie.node.node_switch import Node_Switch
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "main.ui"  # Contains all visual artefacts! TODO: Hardcoded
 
-GLOBAL_USB_SEND_QUERY = []  # Needed between MainApp & Homie-Implementation - Buffers all StringNet-packages that shall be send
+GLOBAL_USB_SEND_QUERY = []  # Needed between MainApp & Homie-Implementation - Buffers all StringNet-packages that shall be sent
 
 logging.basicConfig(level=logging.WARN)  # DEBUG
 
@@ -59,7 +60,7 @@ logging.basicConfig(level=logging.WARN)  # DEBUG
 COMMANDS = ["FORMAT", "LIFESIGN", "NETMODE", "DISCOVER", "CREATE", "DELETE", "NAME", "PIN", "TYPE",
             "ONSEQUENCE", "OFFSEQUENCE", "PROTOCOLL", "PULSLENGTH", "RF_TX_REP"]
 SUBCOMMANDS = ["TELLALL", "TELLDEV", "TELLGPIO", "TELLRF", "SETDEV", "SETGPIO", "SETRF"]
-STN_STATES = ["ON", "SilentON", "OFF", "SilentOFF", "TOGGLE", "SilentTOGGLE", "STATUS"]
+STN_STATES = ["ON", "SilentON", "OFF", "SilentOFF", "TOGGLE", "SilentTOGGLE", "STATUS"] #Standard Name States
 
 # Generic Objects and Classes for StringNet-Data-Processing
 class StringNetObject:
@@ -87,7 +88,7 @@ def checkAndExtractStNPackage(line):
 
         for char in tmp:
             position = line.find(char)
-            if position == -1 or position <= x:  # if there is non of those characters or the order is wrong
+            if position == -1 or position <= x:  # if there is none of those characters or the order is wrong
                 return None
             else:
                 x = position
@@ -214,7 +215,7 @@ class My_Switch(Device_Switch):
             for topic, state in zip(self.TOPIC_BUFFER, self.STATE_BUFFER):
                 topic = topic.replace("switch", "", 1)  # Always in it and confuses following node-check
 
-                # Check if the a stored node is namend within the topic
+                # Check if a stored node is namend within the topic
                 for node in self.nodes:
                     # print(topic, node, state, onoff) # DEBUG
                     if node in topic:
@@ -350,7 +351,7 @@ class MainApp:
 
         # USB - Interaction
         self.StringNetPackageBuffer = []  # Holds received Packages from USB to Filter-Interpret Objects
-        self.StringNetSendListBuffer = []  # Holds Que of Packages to be send
+        self.StringNetSendListBuffer = []  # Holds Que of Packages to be sent
         self.StringNetInteractionObjectBuffer = []  # Holds interactable Objects besides System-Commands
         self.StringNetInteractionNumValsBuffer = [0, 60000]  # Holds numbers of interactable Objects besides System-Commands
         self.USB_CON_PARTNER = "" # Buffers newest Device-Name
@@ -402,7 +403,7 @@ class MainApp:
                 secondsCntDown) + " seconds! Abort by unchecking Autostart of Bridge.")
             for s in range(1, 20):
                 time.sleep(0.05)
-                self.mainwindow.update()
+                self.mainwindow.update() #Needed for simultanious UI-Inputs
                 if self.autostartBridgeCheckVal.get() == 0:
                     self.statusText.set("Status | Autostart of Bridge canceled!")
             secondsCntDown = secondsCntDown - 1
@@ -890,13 +891,13 @@ class MainApp:
         self.stopBridgeBtn["state"] = "disabled"
         self.BRIDGE_KILLSIGNAL = True
 
-        # Try 2 close Window, if its still open
+        # Try 2 close Window, if it's still open
         try:
             self.busviewerUI.withdraw()
         except:
             pass
 
-        # Tell its done
+        # Tell it's done
         self.statusText.set("Status | Bridge deactivated!")
 
     def testOutput(self):
@@ -1184,7 +1185,7 @@ class MainApp:
         # Load Info 2 List
         try:
             for line in self.StringNetPackageBuffer:
-                # Extract Informations
+                # Extract Information
                 x = line.split("/")
                 lastDev = x[0]
                 lastTyp = x[1]
@@ -1205,7 +1206,7 @@ class MainApp:
                 # Insert into UI
                 self.StringNetObjectList.insert(parent="", index=index, iid=index,
                                                 values=(lastDev + "/" + lastTyp, lastObject, str(lastNum), lastStr))
-                index = index + 1
+                index = index + 1 #YES, it does us the previous index-var! It ought to throw an error if not initialized as well!
 
             self.statusText.set("Status | Object-List-Updated!")
         except:
@@ -1457,8 +1458,8 @@ class MainApp:
                     print("MQTT-Bridge() | USB-Receive-Error!")
 
                 # Finishing run and schedule loop
+                self.on_changed_busviewer()
                 self.mainwindow.after(100, self.USB2MQTT_BRIDGE)
-                self.mainwindow.after(50, self.on_changed_busviewer)
             else:
                 self.statusText.set("Status | Bridge closed! Mind that connections are still active!")  # DEBUG
                 print("MQTT-Bridge() | Bridge closed with BRIDGE_KILLSIGNAL: ", str(self.BRIDGE_KILLSIGNAL))
@@ -1473,7 +1474,7 @@ class MainApp:
         try:
             # TODO: Imperformant but neccessary
             if "arm" in platform.machine():
-                self.mainwindow.update() # Force to update as ugly unusable view
+                self.mainwindow.update() # Force to update UI because it freezes
 
             # Check connections
             try:
@@ -1546,9 +1547,9 @@ class MainApp:
                     print("FirmwareEditorMode() | USB-Receive-Error!")
 
                 # Finishing run and schedule loop
+                self.on_changed_busviewer()
                 self.mainwindow.after(100, self.FirmwareEditorMode)
-                self.mainwindow.after(50, self.on_changed_busviewer)
-                
+
             else:
                 self.statusText.set("Status | FWE closed! Mind that connections are still active!")  # DEBUG
                 print("FirmwareEditorMode() | Bridge closed with UI_State: ", str(self.UI_State))
