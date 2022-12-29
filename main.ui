@@ -3,7 +3,7 @@
   <object class="tk.Toplevel" id="mainWindow">
     <property name="geometry">570x450</property>
     <property name="height">0</property>
-    <property name="minsize">500|400</property>
+    <property name="minsize">550|450</property>
     <property name="overrideredirect">False</property>
     <property name="resizable">both</property>
     <property name="takefocus">true</property>
@@ -718,9 +718,7 @@ and QOS=1</property>
                             <property name="text" translatable="yes">Start Bridge</property>
                             <layout manager="pack">
                               <property name="fill">x</property>
-                              <property name="padx">5</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
+                              <property name="side">top</property>
                             </layout>
                           </object>
                         </child>
@@ -730,31 +728,7 @@ and QOS=1</property>
                             <property name="text" translatable="yes">Stop-Reset Bridge</property>
                             <layout manager="pack">
                               <property name="fill">x</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="ttk.Button" id="openBusViewer">
-                            <property name="command" type="command" cbtype="simple">openBusViewer</property>
-                            <property name="text" translatable="yes">Open Busviewer</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
-                              <property name="padx">5</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="ttk.Button" id="testBusViewerBtn">
-                            <property name="command" type="command" cbtype="simple">testOutput</property>
-                            <property name="text" translatable="yes">Test Busviewer</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
+                              <property name="side">top</property>
                             </layout>
                           </object>
                         </child>
@@ -810,45 +784,11 @@ and QOS=1</property>
                           <property name="side">top</property>
                         </layout>
                         <child>
-                          <object class="ttk.Button" id="openBusviewerFWE">
-                            <property name="command" type="command" cbtype="simple">openBusViewer</property>
-                            <property name="text" translatable="yes">Open Busviewer</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
-                              <property name="padx">5</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="ttk.Button" id="testBusViewer">
-                            <property name="command" type="command" cbtype="simple">testOutput</property>
-                            <property name="cursor">arrow</property>
-                            <property name="text" translatable="yes">Test Busviewer</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="ttk.Separator" id="separator7">
-                            <property name="orient">vertical</property>
-                            <layout manager="pack">
-                              <property name="fill">y</property>
-                              <property name="padx">5</property>
-                              <property name="pady">5</property>
-                              <property name="side">left</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
                           <object class="ttk.Button" id="DISCOVERbtn">
                             <property name="command" type="command" cbtype="simple">DISCOVER</property>
                             <property name="text" translatable="yes">DISCOVER</property>
                             <layout manager="pack">
+                              <property name="fill">x</property>
                               <property name="side">left</property>
                             </layout>
                           </object>
@@ -880,6 +820,7 @@ and QOS=1</property>
                             <property name="cursor">arrow</property>
                             <property name="text" translatable="yes">Clear Object Buffer</property>
                             <layout manager="pack">
+                              <property name="fill">x</property>
                               <property name="padx">5</property>
                               <property name="side">left</property>
                             </layout>
@@ -1278,66 +1219,6 @@ and QOS=1</property>
         <property name="width">1000</property>
         <layout manager="pack">
           <property name="fill">both</property>
-          <property name="side">bottom</property>
-        </layout>
-      </object>
-    </child>
-  </object>
-  <object class="tk.Toplevel" id="busviewerUI">
-    <property name="geometry">480x320</property>
-    <property name="height">0</property>
-    <property name="minsize">300|200</property>
-    <property name="resizable">both</property>
-    <property name="title" translatable="yes">StringNet - PackageViewer</property>
-    <property name="width">0</property>
-    <child>
-      <object class="ttk.Labelframe" id="labelframe2">
-        <property name="height">0</property>
-        <property name="relief">flat</property>
-        <property name="text" translatable="yes">Bus-Viewer (Note: Scrolls down with each new line!)</property>
-        <property name="width">0</property>
-        <layout manager="pack">
-          <property name="expand">true</property>
-          <property name="fill">both</property>
-          <property name="padx">5</property>
-          <property name="pady">5</property>
-          <property name="side">top</property>
-        </layout>
-        <child>
-          <object class="pygubu.builder.widgets.scrolledframe" id="busviewerScrollFrame">
-            <property name="scrolltype">both</property>
-            <property name="usemousewheel">true</property>
-            <layout manager="pack">
-              <property name="expand">true</property>
-              <property name="fill">both</property>
-              <property name="padx">5</property>
-              <property name="pady">5</property>
-              <property name="side">top</property>
-            </layout>
-            <child>
-              <object class="tk.Message" id="busPrint">
-                <property name="anchor">nw</property>
-                <property name="background">#000000</property>
-                <property name="font">TkDefaultFont</property>
-                <property name="foreground">#ffffff</property>
-                <property name="relief">sunken</property>
-                <property name="textvariable">string:bridgeBusviewer</property>
-                <property name="width">2000</property>
-                <layout manager="pack">
-                  <property name="expand">true</property>
-                  <property name="fill">both</property>
-                  <property name="side">top</property>
-                </layout>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </child>
-    <child>
-      <object class="ttk.Sizegrip" id="sizegrip3">
-        <layout manager="pack">
-          <property name="anchor">se</property>
           <property name="side">bottom</property>
         </layout>
       </object>

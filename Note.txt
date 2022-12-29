@@ -5,14 +5,11 @@ Used extern Python3-Librarys - needed for run:
 - homie (V4 ... modified! => install once with extras and uninstall just "homie" to use local library)
 
 Raspberry:
-	=> Command für rc.local
-	- sudo -H -u pi lxterminal -e "python3 /home/pi/Desktop/StringNet-Gateway/mainapp.py" &
+	<YOUR_MAINPATH> = /home/pi/Desktop/StringNet-Gateway ... no ""!!
 	
-	=> Commands in sudo nano /etc/xdg/lxsession/LXDE-pi/autostart
-	- 	@lxpanel --profile LXDE-pi
-		@pcmanfm --desktop --profile LXDE-pi
-		@xscreensaver -no-splash
-		@lxterminal -e python3 /home/pi/Desktop/StringNet-Gateway/mainapp.py
+	=> Command für etc/rc.local
+		sudo -H -u pi lxterminal -e "python3 <YOUR_MAINPATH>" &
 
-	=> Restart as Application-crash every 24hrs
-	while true; do python3 ./mainapp.py; sleep 5; done
+	=> As application crashes every 24hrs - do a restarting run.sh
+		while true; do python3 <YOUR_MAINPATH>/mainapp.py; sleep 5; done	
+	
