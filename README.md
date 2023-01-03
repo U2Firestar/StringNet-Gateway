@@ -34,3 +34,11 @@ To install on Raspberry:
 		while true; do python3 <YOUR_MAINPATH>/mainapp.py; sleep 5; done	
 
 ![Works with Homie](https://github.com/U2Firestar/StringNet-Gateway/blob/main/works-with-homie.png)
+
+Versions:
+- 1.0.0 - 08.2021 - Hardcoded initial version
+- 1.1.0 - 09.2021 - Adding UDP-support
+- 2.0.0 - 04.2022 - Hardcoded to dynamic solution, removing UDP-support, adding GUI
+- 2.0.1 - 12.2022 - First X-Server-Bugfix (broke), beautify code
+- 2.1.0 - 12.2022 - Fixing X-Server-Bug by moving dynamic outputs to commandline
+- 2.1.1 - 01.2023 - Adjusting discovery intervalls, beautify github
