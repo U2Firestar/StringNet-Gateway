@@ -1,6 +1,6 @@
 aboutprogramm = "\
 Softwarepurpose: StringNet-IoT-Gateway - Serial Programming, Setup and Control\n\
-Version: 2.1.0 29.12.2022\n\
+Version: 2.1.1 03.01.2023\n\
 Author: Emil Sedlacek (U2Firestar, Firestar)\n\
 Originally supported by: UAS Technikum Vienna and 3S-Sedlak\n\
 Note: See paper, Note.txt, commandtable in Excle and Firmware-Source-Files for more info!\n\
@@ -11,8 +11,7 @@ Patch-Notes (Firmware and GUI) since 1.0.x:\n\
     - Added GUI (Busviewer moved to Commandline)\n\
     - Homie (V4) - Support (backwards-compatible to OpenHABs HomieV3-Implementation)\n\
     -- In the modified Python HomieV4-Library the \"Switch\"-Element is extended!\n\
-    - FW Settings: Addressing disabled, Lifesign every 60sec\n\
-    - KNOWN BUG: UI crashes after around 24h due to X-Server-Bug\
+    - FW Settings: Addressing disabled, Lifesign every 60sec\
 "
 
 ## Special thanks and Credits to:
@@ -371,7 +370,7 @@ class MainApp:
             # The root is /homie
         }
         self.HOMIE_SWITCH_DEVICES = None  # stores central MySwitch-Objects with many nodes in it
-        self.HOMIE_DISCOVER_INTERVAL = 30 * 60 #in seconds
+        self.HOMIE_DISCOVER_INTERVAL = 24 * 60 * 60 #in seconds
         self.HOMIE_DISCOVER_LAST_TIME = time.time() - self.HOMIE_DISCOVER_INTERVAL + 30 # HARDCODED WAITING
 
         ## Limit and Setting UI-Options
