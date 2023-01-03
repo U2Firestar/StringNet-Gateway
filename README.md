@@ -1,7 +1,6 @@
 # GUI for Setup and Bridging of StringNet-Device
-This part of the bachelor thesis project (MQTT/Homie-RF433-MHz-Bridge to remote power outlets) is the communcation node between and an MQTT-capable service or smart home system with Service for Homie-V4-convention. 
-It's purpose is also to act as API and GUI to send requests and commands via StringNet (own protocoll over UART / USB).
-Its' counterpart is [StringNet-RF-APIandGUI](https://github.com/U2Firestar/StringNet-RF-Gateway-Firmware )
+This part of the bachelor thesis project (RF-Bridge between a Smart Home and remote power outlets, over MQTT/Homie) is the communcation node for MQTT-capable service like a smart home system supporting the Homie-V4-convention. It's purpose is provice a GUI for seting up and bridging requests / commands to a StringNet (own protocoll over UART / USB) - Device.
+Its' counterpart is [StringNet-RF-APIandGUI](https://github.com/U2Firestar/StringNet-Firmware)
 
 Used IDE is: PyCharm Community Edition with Python 3.10
 
@@ -20,6 +19,6 @@ This project builds upon following librarys:
 
 Therefor special thanks!
 
-Note: It's advised to install "homie" (v4) via pip to get all neccessary packages and then uninstall the package again as homie and Pygubu are already preinstalled in this project.
+Note: It's advised to install "homie" (v4) via pip to get all neccessary packages and then (only) uninstall "homie" again as it (and Pygubu) are already preinstalled in this project.
 
 ![Works with Homie](https://github.com/U2Firestar/StringNet-Gateway/blob/main/works-with-homie.png)
