@@ -1,4 +1,4 @@
-# GUI for Setup and Bridiging of StringNet-Device
+# GUI for Setup and Bridging of StringNet-Device
 This part of the bachelor thesis project (MQTT/Homie-RF433-MHz-Bridge to remote power outlets) is the communcation node between and an MQTT-capable service or smart home system with Service for Homie-V4-convention. 
 It's purpose is also to act as API and GUI to send requests and commands via StringNet (own protocoll over UART / USB).
 Its' counterpart is [StringNet-RF-APIandGUI](https://github.com/U2Firestar/StringNet-RF-Gateway-Firmware )
