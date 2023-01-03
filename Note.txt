@@ -7,9 +7,9 @@ Used extern Python3-Librarys - needed for run:
 Raspberry:
 	<YOUR_MAINPATH> = /home/pi/Desktop/StringNet-Gateway ... no ""!!
 	
-	=> Command für etc/rc.local
+	=> Command for etc/rc.local
 		sudo -H -u pi lxterminal -e "python3 <YOUR_MAINPATH>" &
 
-	=> As application crashes every 24hrs - do a restarting run.sh
+	=> For eventuall crashes do a restarting run.sh with
 		while true; do python3 <YOUR_MAINPATH>/mainapp.py; sleep 5; done	
 	
