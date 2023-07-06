@@ -42,3 +42,4 @@ Versions:
 - 2.0.1 - 12.2022 - First X-Server-Bugfix (broke), beautify code
 - 2.1.0 - 12.2022 - Fixing X-Server-Bug by moving dynamic outputs to commandline
 - 2.1.1 - 01.2023 - Adjusting discovery intervalls, beautify github
+- 2.1.2+3 - x.2023 - Outputs beautified
