@@ -1,0 +1,1458 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.2">
+  <object class="tk.Toplevel" id="mainWindow">
+    <property name="geometry">570x450</property>
+    <property name="height">0</property>
+    <property name="minsize">550|450</property>
+    <property name="overrideredirect">False</property>
+    <property name="resizable">both</property>
+    <property name="takefocus">true</property>
+    <property name="title" translatable="yes">StringNet - Center</property>
+    <property name="width">0</property>
+    <containerlayout manager="pack">
+      <property name="anchor">center</property>
+    </containerlayout>
+    <child>
+      <object class="pygubu.builder.widgets.scrolledframe" id="mainScrolledframe">
+        <property name="scrolltype">both</property>
+        <property name="usemousewheel">true</property>
+        <layout manager="pack">
+          <property name="expand">true</property>
+          <property name="fill">both</property>
+          <property name="side">top</property>
+        </layout>
+        <child>
+          <object class="ttk.Notebook" id="appNotebook">
+            <property name="height">0</property>
+            <property name="width">0</property>
+            <layout manager="pack">
+              <property name="expand">true</property>
+              <property name="fill">both</property>
+              <property name="side">top</property>
+            </layout>
+            <child>
+              <object class="ttk.Notebook.Tab" id="IntroTab">
+                <property name="text" translatable="yes">Instructions</property>
+                <child>
+                  <object class="ttk.Frame" id="introFrame">
+                    <property name="height">0</property>
+                    <property name="width">0</property>
+                    <layout manager="pack">
+                      <property name="fill">both</property>
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="greeter">
+                        <property name="background">#ff8000</property>
+                        <property name="font">system</property>
+                        <property name="justify">center</property>
+                        <property name="padding">10</property>
+                        <property name="relief">raised</property>
+                        <property name="takefocus">false</property>
+                        <property name="text" translatable="yes">Welcome to the central App for StringNet-Interactions!</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Separator" id="separator1">
+                        <property name="orient">horizontal</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="instructionText">
+                        <property name="background">#ffffff</property>
+                        <property name="padding">5</property>
+                        <property name="relief">groove</property>
+                        <property name="text" translatable="yes">Please follow these steps before run:
+ 0. Read About and set wanted Startup-options!
+ 1. Ensure valid Settings! (Don't forget to test!)
+ 2. Launch one Subprogram!
+(3. Tap again to reset and change chosen option!)</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Separator" id="separator11">
+                        <property name="orient">horizontal</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="toggleFWEditorBtn">
+                        <property name="command" type="command" cbtype="simple">toggleFWEditorUpdate</property>
+                        <property name="state">normal</property>
+                        <property name="text" translatable="yes">Firmware Editor | Manual control - Mode
+(USB &lt;-&gt; Program)</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="padx">15</property>
+                          <property name="pady">10</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="toggleBridgeBtn">
+                        <property name="command" type="command" cbtype="simple">toggleBridgeUpdate</property>
+                        <property name="state">normal</property>
+                        <property name="text" translatable="yes">Bridge | MQTT / HOMIE - Mode
+(USB &lt;- Program -&gt; Network)</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="padx">15</property>
+                          <property name="pady">10</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="startupFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Startup</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">bottom</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Checkbutton" id="autostartBridgeCheck">
+                            <property name="command" type="command" cbtype="simple">autostartBridgeCheckUpdate</property>
+                            <property name="takefocus">false</property>
+                            <property name="text" translatable="yes">Automatically start Bridge (also next time if saved)</property>
+                            <property name="variable">int:autostartBridgeCheckVal</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">15</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Checkbutton" id="networkModeCheck">
+                            <property name="command" type="command" cbtype="simple">networkModeUpdate</property>
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Enable From/To-Communication (ToDo)</property>
+                            <property name="variable">int:networkModeCheckVal</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">15</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="SettingsTab">
+                <property name="text" translatable="yes">Settings and Connections</property>
+                <child>
+                  <object class="ttk.Frame" id="settingsFrame">
+                    <property name="height">0</property>
+                    <property name="width">0</property>
+                    <layout manager="pack">
+                      <property name="expand">true</property>
+                      <property name="fill">both</property>
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Labelframe" id="USBSetFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">USB - Settings</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label7">
+                            <property name="background">#ffffFF</property>
+                            <property name="padding">5</property>
+                            <property name="relief">groove</property>
+                            <property name="takefocus">false</property>
+                            <property name="text" translatable="yes">Note that
+Settings 
+differ 
+per OS</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="toggleUSBConnBtn">
+                            <property name="command" type="command" cbtype="simple">toggleUSBConn</property>
+                            <property name="text" translatable="yes">Connect</property>
+                            <property name="textvariable">string:toggleUSBConnBtnTxt</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="ipadx">5</property>
+                              <property name="ipady">5</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">right</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Frame" id="USBSettingsSubframe">
+                            <property name="height">0</property>
+                            <property name="width">0</property>
+                            <layout manager="pack">
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.Label" id="USBPortText">
+                                <property name="text" translatable="yes">Port:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="USBBaudrateText">
+                                <property name="text" translatable="yes">Baudrate:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">1</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="USBHostText">
+                                <property name="text" translatable="yes">StringNet-Name:</property>
+                                <layout manager="grid">
+                                  <property name="row">2</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="USBReadTimeoutText">
+                                <property name="text" translatable="yes">Read Timeout:</property>
+                                <layout manager="grid">
+                                  <property name="row">3</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="USBPortEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">COM6 or /dev/ttyUSB0</property>
+                                <property name="textvariable">string:USBPortEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="USBBaudrateEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">115200</property>
+                                <property name="textvariable">int:USBBaudrateEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="USBHostEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">stringNet</property>
+                                <property name="textvariable">string:USBHostEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">2</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="USBReadTimeoutEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">0.1</property>
+                                <property name="textvariable">double:USBReadTimeoutEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">3</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="USBPortCheck">
+                                <property name="command" type="command" cbtype="simple">USBPortCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:USBPortCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="USBBaudrateCheck">
+                                <property name="command" type="command" cbtype="simple">USBBaudrateCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:USBBaudrateCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="USBHostCheck">
+                                <property name="command" type="command" cbtype="simple">USBHostCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:USBHostCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">2</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="USBReadTimeoutCheck">
+                                <property name="command" type="command" cbtype="simple">USBReadTimeoutCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:USBReadTimeoutCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">3</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="MQTTsetFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">MQTT - Settings</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label6">
+                            <property name="background">#ffffFF</property>
+                            <property name="padding">5</property>
+                            <property name="relief">groove</property>
+                            <property name="takefocus">false</property>
+                            <property name="text" translatable="yes">Note that 
+Homie-
+Convention is 
+set to path
+"/homie"
+and QOS=1</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="toggleMQTTConnBtn">
+                            <property name="command" type="command" cbtype="simple">toggleMQTTConn</property>
+                            <property name="text" translatable="yes">Connect</property>
+                            <property name="textvariable">string:toggleMQTTConnBtnTxt</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="ipadx">5</property>
+                              <property name="ipady">5</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">right</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Checkbutton" id="enableGenMQTTBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">enableGenMQTTBridgeBtn</property>
+                            <property name="text" translatable="yes">Enable Generic MQTT Bridge (manual way)</property>
+                            <property name="variable">int:enableGenMQTTBridgeBtnVal</property>
+                            <layout manager="pack">
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Checkbutton" id="enableHomieBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">enableHomieBridgeBtn</property>
+                            <property name="text" translatable="yes">Enable Homie Comnvention (incl. Auto-Discovery)</property>
+                            <property name="variable">int:enableHomieBridgeBtnVal</property>
+                            <layout manager="pack">
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Frame" id="MQTTSettingsSubframe">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="pack">
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.Label" id="MQTTBrokerIPText">
+                                <property name="text" translatable="yes">Broker-IP:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="MQTTBrokerPortText">
+                                <property name="text" translatable="yes">Broker-Port:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">1</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="MQTTHomepathText">
+                                <property name="text" translatable="yes">(Generic) Homepath:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">2</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="MQTTQOSText">
+                                <property name="text" translatable="yes">(Generic) MQTT-QOS:</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">3</property>
+                                  <property name="sticky">e</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="MQTTBrokerIPEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">127.0.0.1</property>
+                                <property name="textvariable">string:MQTTBrokerIPEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="MQTTBrokerPortEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">1883</property>
+                                <property name="textvariable">string:MQTTBrokerPortEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="MQTTHomepathEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">stringNet/</property>
+                                <property name="textvariable">string:MQTTHomepathEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">2</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Entry" id="MQTTQOSEntry">
+                                <property name="exportselection">false</property>
+                                <property name="font">TkTextFont</property>
+                                <property name="justify">left</property>
+                                <property name="state">disabled</property>
+                                <property name="takefocus">false</property>
+                                <property name="text" translatable="yes">0</property>
+                                <property name="textvariable">int:MQTTQOSEntryVal</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">3</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="MQTTBrokerIPCheck">
+                                <property name="command" type="command" cbtype="simple">MQTTBrokerIPCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:MQTTBrokerIPCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="MQTTBrokerPortCheck">
+                                <property name="command" type="command" cbtype="simple">MQTTBrokerPortCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:MQTTBrokerPortCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="MQTTHomepathCheck">
+                                <property name="command" type="command" cbtype="simple">MQTTHomepathCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:MQTTHomepathCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">2</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Checkbutton" id="MQTTQOSCheck">
+                                <property name="command" type="command" cbtype="simple">MQTTQOSCheck</property>
+                                <property name="text" translatable="yes">Edit</property>
+                                <property name="variable">int:MQTTQOSCheckVal</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="row">3</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="PersistanceSubframe">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Persistence</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="PersistanceNote">
+                            <property name="background">#ffffFF</property>
+                            <property name="padding">5</property>
+                            <property name="relief">groove</property>
+                            <property name="takefocus">false</property>
+                            <property name="text" translatable="yes">Note: 
+- Settings-File is autoloaded at start!
+- Open Settings-File copies from another file!
+- All changes need to be actively saved!</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="OpenSettingsFileBtn">
+                            <property name="command" type="command" cbtype="simple">OpenSettingsFileChoose</property>
+                            <property name="text" translatable="yes">Open Settings File</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="ResetSettingsBtn">
+                            <property name="command" type="command" cbtype="simple">ResetSettings</property>
+                            <property name="text" translatable="yes">Reset all Settings</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="StoreSettingsBtn">
+                            <property name="command" type="command" cbtype="simple">StoreSettings</property>
+                            <property name="text" translatable="yes">Save all checkmarked Settings</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="BridgeTab">
+                <property name="text" translatable="yes">Bridge</property>
+                <child>
+                  <object class="ttk.Frame" id="BridgeFrame">
+                    <property name="height">0</property>
+                    <property name="width">0</property>
+                    <layout manager="pack">
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="BridgeNote">
+                        <property name="background">#ffff00</property>
+                        <property name="font">{Arial} 10 {italic}</property>
+                        <property name="padding">10</property>
+                        <property name="relief">groove</property>
+                        <property name="text" translatable="yes">##### Important ######
+- Bridge connects one single StringNet-USB-Device to one chosen MQTT-Broker.
+-- Works in StringNet-P2P-Mode (=&gt; No addresses (TODO))
+-- No briding between MQTT-Modes (=&gt; only Y-Mode)
+
+- Avoid activating Generic MQTT and Homie (MQTT-Convention) in parallel 
+(=&gt; possible redundant MQTT-connection)!
+
+- Homie-Bridge buffers Switch-states (=&gt; states can be outdated)!
+
+- Take a peek into the command-prompt for further verbose Info!</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="BridgeSubframe">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">General Actions</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="padx">15</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Button" id="startBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">startBridge</property>
+                            <property name="text" translatable="yes">Start Bridge</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="stopBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">stopBridge</property>
+                            <property name="text" translatable="yes">Stop-Reset Bridge</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="FirmwareEditorTab">
+                <property name="text" translatable="yes">Firmware Editor</property>
+                <child>
+                  <object class="ttk.Frame" id="FWEditorFrame">
+                    <property name="height">0</property>
+                    <property name="width">0</property>
+                    <layout manager="pack">
+                      <property name="expand">true</property>
+                      <property name="fill">both</property>
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="label1">
+                        <property name="anchor">nw</property>
+                        <property name="background">#ffffff</property>
+                        <property name="padding">10</property>
+                        <property name="relief">groove</property>
+                        <property name="takefocus">false</property>
+                        <property name="text" translatable="yes">Notes: 
+- Comments ("xy} #xyz") and commented Packages ("#{xyz") are allowed like in C-List-File.  
+- Both lists are scrollable.
+- Click on Object (here) or Package (Send Que) to copy to Manual Package-Entry.</property>
+                        <layout manager="pack">
+                          <property name="anchor">nw</property>
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="FWEditorBtnsSubframe">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">General Actions</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">2</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Button" id="DISCOVERbtn">
+                            <property name="command" type="command" cbtype="simple">DISCOVER</property>
+                            <property name="text" translatable="yes">DISCOVER</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="formatDevBtn">
+                            <property name="command" type="command" cbtype="simple">formatDEV</property>
+                            <property name="text" translatable="yes">Format Device</property>
+                            <layout manager="pack">
+                              <property name="padx">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Separator" id="separator13">
+                            <property name="orient">vertical</property>
+                            <layout manager="pack">
+                              <property name="fill">y</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="ClearObjectBufferBtn">
+                            <property name="command" type="command" cbtype="simple">clearObjectList</property>
+                            <property name="cursor">arrow</property>
+                            <property name="text" translatable="yes">Clear Object Buffer</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="ObjectListFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">StringNet-Object-List</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="expand">true</property>
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="pygubu.builder.widgets.scrolledframe" id="scrolledframeObjectList">
+                            <property name="scrolltype">both</property>
+                            <property name="usemousewheel">true</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="pygubu.builder.widgets.editabletreeview" id="StringNetObjectList">
+                                <property name="height">0</property>
+                                <property name="selectmode">extended</property>
+                                <property name="show">headings</property>
+                                <layout manager="pack">
+                                  <property name="expand">true</property>
+                                  <property name="fill">both</property>
+                                  <property name="padx">5</property>
+                                  <property name="pady">5</property>
+                                </layout>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="StringNetObjectListColDev">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">50</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">Device</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">60</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="StringNetObjectListColObject">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">50</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">Object</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">0</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="StringNetObjectListColValNum">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">50</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">Value (Num)</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">0</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="StringNetObjectListColValStr">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">50</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">Value (String)</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="SendQueTab">
+                <property name="text" translatable="yes">Send Que</property>
+                <child>
+                  <object class="ttk.Frame" id="SendQueFrame">
+                    <property name="height">200</property>
+                    <property name="width">200</property>
+                    <layout manager="pack">
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Labelframe" id="ComQueActionsSubframe">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Command-Que-Actions</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Button" id="loadClistFileBtn">
+                            <property name="command" type="command" cbtype="simple">loadClistFile</property>
+                            <property name="text" translatable="yes">Open Script-File</property>
+                            <layout manager="pack">
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="saveAsClistFileBtn">
+                            <property name="command" type="command" cbtype="simple">saveAsClistFile</property>
+                            <property name="text" translatable="yes">Save as Script</property>
+                            <layout manager="pack">
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Separator" id="separator12">
+                            <property name="orient">vertical</property>
+                            <layout manager="pack">
+                              <property name="fill">y</property>
+                              <property name="padx">10</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="clearQueBtn">
+                            <property name="command" type="command" cbtype="simple">clearClistQue</property>
+                            <property name="text" translatable="yes">Clear Que</property>
+                            <layout manager="pack">
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="sendClistQueBtn">
+                            <property name="command" type="command" cbtype="simple">sendClistQue</property>
+                            <property name="text" translatable="yes">Send Que</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Separator" id="separator15">
+                            <property name="orient">vertical</property>
+                            <layout manager="pack">
+                              <property name="fill">y</property>
+                              <property name="padx">10</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="openObjectEditorBtn">
+                            <property name="command" type="command" cbtype="simple">openObjectEditor</property>
+                            <property name="text" translatable="yes">Open Object Editor</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="padx">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="ComQueManualLineFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Manual Package-Entry</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Entry" id="manualPackageEntry">
+                            <property name="cursor">arrow</property>
+                            <property name="justify">center</property>
+                            <property name="text" translatable="yes">{LED;TOGGLE}</property>
+                            <property name="textvariable">string:manualPackageEntryText</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="manualPackageEntryBtn">
+                            <property name="command" type="command" cbtype="simple">manualPackageEntry</property>
+                            <property name="text" translatable="yes">Add</property>
+                            <layout manager="pack">
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="packageEntryEditBtn">
+                            <property name="command" type="command" cbtype="simple">manualPackageEntryEdit</property>
+                            <property name="text" translatable="yes">Edit</property>
+                            <layout manager="pack">
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="packageEntryDelBtn">
+                            <property name="command" type="command" cbtype="simple">manualPackageEntryDel</property>
+                            <property name="text" translatable="yes">Delete</property>
+                            <layout manager="pack">
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="ComQueListSubframe">
+                        <property name="height">0</property>
+                        <property name="labelanchor">nw</property>
+                        <property name="text" translatable="yes">Command-Que-List</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="expand">true</property>
+                          <property name="fill">both</property>
+                          <property name="padx">5</property>
+                          <property name="pady">5</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="pygubu.builder.widgets.scrolledframe" id="scrolledframeComQue">
+                            <property name="scrolltype">both</property>
+                            <property name="usemousewheel">true</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="pygubu.builder.widgets.editabletreeview" id="ComQueList">
+                                <property name="height">0</property>
+                                <property name="selectmode">extended</property>
+                                <property name="show">headings</property>
+                                <layout manager="pack">
+                                  <property name="expand">true</property>
+                                  <property name="fill">both</property>
+                                  <property name="padx">5</property>
+                                  <property name="pady">5</property>
+                                  <property name="side">top</property>
+                                </layout>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="ComQueListCol2">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">100</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">StringNet-Packages</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">400</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Treeview.Column" id="column4">
+                                    <property name="column_anchor">w</property>
+                                    <property name="heading_anchor">w</property>
+                                    <property name="minwidth">50</property>
+                                    <property name="stretch">true</property>
+                                    <property name="text" translatable="yes">Index</property>
+                                    <property name="tree_column">false</property>
+                                    <property name="visible">true</property>
+                                    <property name="width">50</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="AboutTab">
+                <property name="text" translatable="yes">About</property>
+                <child>
+                  <object class="ttk.Frame" id="AboutFrame">
+                    <property name="height">0</property>
+                    <property name="width">0</property>
+                    <layout manager="pack">
+                      <property name="expand">true</property>
+                      <property name="fill">both</property>
+                      <property name="side">top</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Labelframe" id="ProgrammInfoFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Program-Info</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">both</property>
+                          <property name="padx">15</property>
+                          <property name="pady">15</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="AboutSoftwareInfo">
+                            <property name="justify">left</property>
+                            <property name="text" translatable="yes">&lt;aboutprogramm in main.py&gt;</property>
+                            <property name="textvariable">string:aboutsoftwareVar</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="padx">15</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="HomieImgLable">
+                            <property name="compound">center</property>
+                            <property name="image">works-with-homie.png</property>
+                            <property name="justify">center</property>
+                            <layout manager="pack">
+                              <property name="fill">both</property>
+                              <property name="padx">15</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Sizegrip" id="sizegrip1">
+        <layout manager="pack">
+          <property name="anchor">se</property>
+          <property name="fill">both</property>
+          <property name="side">right</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="tk.Message" id="mainStatusBar">
+        <property name="anchor">nw</property>
+        <property name="text" translatable="yes">Status</property>
+        <property name="textvariable">string:statusText</property>
+        <property name="width">1000</property>
+        <layout manager="pack">
+          <property name="fill">both</property>
+          <property name="side">bottom</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+  <object class="tk.Toplevel" id="stringNetObjectEditor">
+    <property name="geometry">480x330</property>
+    <property name="height">200</property>
+    <property name="title" translatable="yes">StringNet - Object Editor</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Labelframe" id="StNOEFrame">
+        <property name="height">0</property>
+        <property name="relief">flat</property>
+        <property name="text" translatable="yes">StringNet Object Editor</property>
+        <property name="width">0</property>
+        <layout manager="pack">
+          <property name="expand">true</property>
+          <property name="fill">both</property>
+          <property name="padx">5</property>
+          <property name="pady">5</property>
+          <property name="side">top</property>
+        </layout>
+        <child>
+          <object class="pygubu.builder.widgets.scrolledframe" id="scrolledframe2">
+            <property name="scrolltype">both</property>
+            <property name="usemousewheel">true</property>
+            <layout manager="pack">
+              <property name="expand">true</property>
+              <property name="fill">both</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
+              <property name="side">top</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="hint">
+                <property name="background">#ffffff</property>
+                <property name="padding">5</property>
+                <property name="text" translatable="yes">Hints:	- Is only a guideline for eventually valid command.
+	-- A quick look into the table of StringNet-commands is recommended!
+	- Avoid chosing the Subsectionheaders!</property>
+                <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
+                  <property name="padx">5</property>
+                  <property name="pady">5</property>
+                  <property name="side">top</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Panedwindow" id="panedwindow1">
+                <property name="height">0</property>
+                <property name="orient">horizontal</property>
+                <property name="width">0</property>
+                <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
+                  <property name="padx">5</property>
+                  <property name="pady">5</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Panedwindow.Pane" id="pane1">
+                    <property name="weight">1</property>
+                    <child>
+                      <object class="ttk.Labelframe" id="comChooserFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Choose or input COM</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="comChooserCombobox">
+                            <property name="textvariable">string:comChooserComboboxTxt</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Panedwindow.Pane" id="pane2">
+                    <property name="weight">1</property>
+                    <child>
+                      <object class="ttk.Labelframe" id="subcomChooserFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Choose or input SUBCOM</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="subcomChooserCombobox">
+                            <property name="textvariable">string:subcomChooserComboboxTxt</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Panedwindow" id="panedwindow2">
+                <property name="height">0</property>
+                <property name="orient">horizontal</property>
+                <property name="width">0</property>
+                <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
+                  <property name="padx">5</property>
+                  <property name="pady">5</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Panedwindow.Pane" id="pane9">
+                    <property name="weight">1</property>
+                    <child>
+                      <object class="ttk.Labelframe" id="valnumChooserFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Choose or input VAL_NUM
+(only Integer)</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="valnumChooserCombobox">
+                            <property name="textvariable">string:valnumChooserComboboxTxt</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Panedwindow.Pane" id="pane8">
+                    <property name="weight">1</property>
+                    <child>
+                      <object class="ttk.Labelframe" id="valstrChooserFrame">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Choose or input VAL_STR
+(only String)</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="valstrChooserCombobox">
+                            <property name="textvariable">string:valstrChooserComboboxTxt</property>
+                            <layout manager="pack">
+                              <property name="expand">true</property>
+                              <property name="fill">both</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Labelframe" id="FinishingActionsFrame">
+                <property name="height">0</property>
+                <property name="text" translatable="yes">Finishing Actions</property>
+                <property name="width">0</property>
+                <layout manager="pack">
+                  <property name="fill">both</property>
+                  <property name="ipadx">5</property>
+                  <property name="ipady">2</property>
+                  <property name="padx">5</property>
+                  <property name="pady">5</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Button" id="sendSTENowBtn">
+                    <property name="command" type="command" cbtype="simple">sendSTENow</property>
+                    <property name="text" translatable="yes">Send now</property>
+                    <layout manager="pack">
+                      <property name="padx">5</property>
+                      <property name="pady">5</property>
+                      <property name="side">left</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Button" id="sendSTEQueBtn">
+                    <property name="command" type="command" cbtype="simple">sendSTEQue</property>
+                    <property name="text" translatable="yes">Send Que</property>
+                    <layout manager="pack">
+                      <property name="side">left</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Sizegrip" id="sizegrip2">
+        <layout manager="pack">
+          <property name="anchor">se</property>
+          <property name="side">bottom</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+</interface>
