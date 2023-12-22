@@ -21,7 +21,7 @@
 - [Eclipse Paho™ MQTT Python Client](https://github.com/eclipse/paho.mqtt.python) from eclipse @ Github
 - [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github
 
-**Pre-requisites (eventually use "pip3" on raspberry):**
+**Pre-requisites (use "pip3" on raspberry):**
 ~~~~
 pip install pygubu
 ~~~~
@@ -47,4 +47,4 @@ Versions:
 - 2.1.0 - 12.2022 - Fixing X-Server-bug by moving busviewer outputs to commandline
 - 2.1.1 - 01.2023 - Adjusting discovery intervalls, beautify github
 - 2.1.2+3 -  2023 - Outputs beautified
-- 2.2.0 - 12.2023 - Libraries updated, README corrected, files moved
+- 2.2.0 - 12.2023 - Libraries updated and now correctly handled, README corrected, files moved, GUI updated
