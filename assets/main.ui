@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <interface version="1.2">
   <object class="tk.Toplevel" id="mainWindow">
-    <property name="geometry">570x450</property>
+    <property name="geometry">570x470</property>
     <property name="height">0</property>
-    <property name="minsize">550|450</property>
+    <property name="minsize">550|470</property>
     <property name="overrideredirect">False</property>
     <property name="resizable">both</property>
     <property name="takefocus">true</property>
-    <property name="title" translatable="yes">StringNet - Center</property>
+    <property name="title" translatable="yes">StringNet - Gateway</property>
     <property name="width">0</property>
     <containerlayout manager="pack">
       <property name="anchor">center</property>
@@ -43,13 +43,13 @@
                     </layout>
                     <child>
                       <object class="ttk.Label" id="greeter">
-                        <property name="background">#ff8000</property>
+                        <property name="background">#ffae5e</property>
                         <property name="font">system</property>
                         <property name="justify">center</property>
                         <property name="padding">10</property>
                         <property name="relief">raised</property>
                         <property name="takefocus">false</property>
-                        <property name="text" translatable="yes">Welcome to the central App for StringNet-Interactions!</property>
+                        <property name="text" translatable="yes">Welcome to the StringNet-Gateway!</property>
                         <layout manager="pack">
                           <property name="fill">both</property>
                         </layout>
@@ -150,6 +150,38 @@
                             <layout manager="pack">
                               <property name="fill">x</property>
                               <property name="padx">15</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="BridgeSubframe">
+                        <property name="height">0</property>
+                        <property name="text" translatable="yes">Bridge actions</property>
+                        <property name="width">0</property>
+                        <layout manager="pack">
+                          <property name="fill">x</property>
+                          <property name="padx">15</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Button" id="startBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">startBridge</property>
+                            <property name="text" translatable="yes">START</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
+                              <property name="side">top</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="stopBridgeBtn">
+                            <property name="command" type="command" cbtype="simple">stopBridge</property>
+                            <property name="text" translatable="yes">STOP</property>
+                            <layout manager="pack">
+                              <property name="fill">x</property>
                               <property name="side">top</property>
                             </layout>
                           </object>
@@ -269,7 +301,7 @@ per OS</property>
                                 <property name="justify">left</property>
                                 <property name="state">disabled</property>
                                 <property name="takefocus">false</property>
-                                <property name="text" translatable="yes">COM6 or /dev/ttyUSB0</property>
+                                <property name="text" translatable="yes">COMx or /dev/ttyUSB0</property>
                                 <property name="textvariable">string:USBPortEntryVal</property>
                                 <layout manager="grid">
                                   <property name="column">1</property>
@@ -543,7 +575,7 @@ and QOS=1</property>
                                 <property name="justify">left</property>
                                 <property name="state">disabled</property>
                                 <property name="takefocus">false</property>
-                                <property name="text" translatable="yes">0</property>
+                                <property name="text" translatable="yes">1</property>
                                 <property name="textvariable">int:MQTTQOSEntryVal</property>
                                 <layout manager="grid">
                                   <property name="column">1</property>
@@ -658,76 +690,6 @@ and QOS=1</property>
                             <layout manager="pack">
                               <property name="fill">x</property>
                               <property name="padx">5</property>
-                              <property name="side">top</property>
-                            </layout>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="ttk.Notebook.Tab" id="BridgeTab">
-                <property name="text" translatable="yes">Bridge</property>
-                <child>
-                  <object class="ttk.Frame" id="BridgeFrame">
-                    <property name="height">0</property>
-                    <property name="width">0</property>
-                    <layout manager="pack">
-                      <property name="side">top</property>
-                    </layout>
-                    <child>
-                      <object class="ttk.Label" id="BridgeNote">
-                        <property name="background">#ffff00</property>
-                        <property name="font">{Arial} 10 {italic}</property>
-                        <property name="padding">10</property>
-                        <property name="relief">groove</property>
-                        <property name="text" translatable="yes">##### Important ######
-- Bridge connects one single StringNet-USB-Device to one chosen MQTT-Broker.
--- Works in StringNet-P2P-Mode (=&gt; No addresses (TODO))
--- No briding between MQTT-Modes (=&gt; only Y-Mode)
-
-- Avoid activating Generic MQTT and Homie (MQTT-Convention) in parallel 
-(=&gt; possible redundant MQTT-connection)!
-
-- Homie-Bridge buffers Switch-states (=&gt; states can be outdated)!
-
-- Take a peek into the command-prompt for further verbose Info!</property>
-                        <layout manager="pack">
-                          <property name="fill">both</property>
-                          <property name="padx">10</property>
-                          <property name="pady">10</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Labelframe" id="BridgeSubframe">
-                        <property name="height">0</property>
-                        <property name="text" translatable="yes">General Actions</property>
-                        <property name="width">0</property>
-                        <layout manager="pack">
-                          <property name="fill">x</property>
-                          <property name="padx">15</property>
-                          <property name="side">top</property>
-                        </layout>
-                        <child>
-                          <object class="ttk.Button" id="startBridgeBtn">
-                            <property name="command" type="command" cbtype="simple">startBridge</property>
-                            <property name="text" translatable="yes">Start Bridge</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
-                              <property name="side">top</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="ttk.Button" id="stopBridgeBtn">
-                            <property name="command" type="command" cbtype="simple">stopBridge</property>
-                            <property name="text" translatable="yes">Stop-Reset Bridge</property>
-                            <layout manager="pack">
-                              <property name="fill">x</property>
                               <property name="side">top</property>
                             </layout>
                           </object>

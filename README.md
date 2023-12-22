@@ -8,15 +8,18 @@
 - - Homie (V4) - Support (backwards-compatible to HomieV3)
 - Autostart - useful for long-term application
 - Transmission-queues and echo-filtering
+- Detailed verbose info in commandline
 
 **Limitations:**
-- One instance can handle ONE StringNet-Device
-- Doesn't support addressing (compared to firmware)
+- One bridge-instance can handle and connect ONE StringNet-Device
+- Doesn't completely support addressing (compared to firmware)
+- HOMIE doesn't work in StringNet-Address-Mode!
+- Communication always is Y-wise, so: MQTT <--> StringNet
 
 **This project builds upon following librarys and therefor special thanks to:**
 - [Pygubu (+Designer)](https://github.com/alejandroautalan/pygubu-designer) from alejandroautalan @ Github
 - [Eclipse Paho™ MQTT Python Client](https://github.com/eclipse/paho.mqtt.python) from eclipse @ Github
-- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github (--> [forked for app](https://github.com/U2Firestar/Homie4StringNet))
+- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github
 
 **Pre-requisites (eventually use "pip3" on raspberry):**
 ~~~~
@@ -26,9 +29,8 @@ pip install pygubu
 pip install paho-mqtt
 ~~~~
 ~~~~
-pip install git+https://github.com/U2Firestar/Homie4StringNet.git@master
+pip install Homie4
 ~~~~
-_Make sure to uninstall homie4 beforehand!_
 
 
 About: Project for Bachelorthesis, originally supported by UAS Technikum Vienna and 3S-Sedlak
@@ -45,4 +47,4 @@ Versions:
 - 2.1.0 - 12.2022 - Fixing X-Server-bug by moving busviewer outputs to commandline
 - 2.1.1 - 01.2023 - Adjusting discovery intervalls, beautify github
 - 2.1.2+3 -  2023 - Outputs beautified
-- 2.2.0 - 12.2023 - Libraries updated, README simplified
+- 2.2.0 - 12.2023 - Libraries updated, README corrected, files moved

@@ -1,1 +1,1 @@
-{"enableMQTTbridge": 0, "enableHomieBridge": 1, "autostartBridge": 0, "USB_HOST_NAME": "stringNet", "USB_PORT": "COM5", "USB_BAUDRATE": 115200, "USB_TIMEOUT": 0.1, "MQTT_BROKER_IP": "10.0.0.99", "MQTT_BROKER_PORT": 1883, "MQTT_HOMEPATH": "stringNet/", "MQTT_TIMEOUT": 60, "MQTT_QOS": 0}
+{"enableMQTTbridge": 0, "enableHomieBridge": 1, "autostartBridge": 1, "USB_HOST_NAME": "stringNet", "USB_PORT": "COM6", "USB_BAUDRATE": 115200, "USB_TIMEOUT": 0.1, "MQTT_BROKER_IP": "10.0.0.99", "MQTT_BROKER_PORT": 1883, "MQTT_HOMEPATH": "stringNet/", "MQTT_TIMEOUT": 60, "MQTT_QOS": 1}
