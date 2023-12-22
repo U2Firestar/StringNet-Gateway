@@ -35,13 +35,9 @@ from tkinter.filedialog import askopenfilename, asksaveasfile
 # Extern
 import pygubu
 
-import paho.mqtt.client as mqtt
-
-from homie.device_switch import Device_Switch
-
 ## Setup
 PROJECT_PATH = pathlib.Path(__file__).parent
-PROJECT_UI = PROJECT_PATH / "main.ui"  # Contains all visuals! HARDCODED 
+PROJECT_UI = PROJECT_PATH / "assets" / "main.ui"  # Contains all visuals! HARDCODED
 
 GLOBAL_USB_SEND_QUERY = []  # Needed between MainApp & Homie-Implementation - Buffers all StringNet-packages that shall be sent
 
@@ -123,11 +119,11 @@ def convert2StNPackage(line):
 
     return StringNetPackage(command, subcommand, Val_num, Val_str)
 
-# Little globally needed StringNet-Package Wrapper
+# Globally needed StringNet-Package Wrapper
 def convert2sendablePackage(COM, SUBCOM, VAL_NUM, VAL_STR):
     return "{" + str(COM) + ";" + str(SUBCOM) + ";" + str(VAL_NUM) + ";" + str(VAL_STR) + "}"
 
-# Little Helper for String-Conversion of Booleans
+# Helper for String-Conversion of Booleans
 def convertBool2String(self, boolVal):
     if boolVal == "false" or boolVal == False:
         return "OFF"
@@ -185,6 +181,10 @@ def nicefy2HomieID(string):
         string = string.replace(char, "")
 
     return string
+
+# Extern
+import paho.mqtt.client as mqtt
+from homie.device_switch import Device_Switch
 
 ## Main Class of the complete UI
 class StringNetGateway:
@@ -637,13 +637,13 @@ class StringNetGateway:
         # Choosing the wanted settings-file - dependend on Variable
         if ask is not None:
             # show an "Open" dialog box and return the path to the selected file
-            newPath = askopenfilename(initialfile="settings.json",
+            newPath = askopenfilename(initialfile="assets/settings.json",
                                       title="Open Settingsfile for StringNet-Center",
                                       filetypes=(("JSON", "*.json"),
                                                  ("All files",
                                                   "*.*")))
         else:
-            newPath = "settings.json"
+            newPath = "assets/settings.json"
 
         # Check if it is not empty
         if len(newPath) > 0:
@@ -723,7 +723,7 @@ class StringNetGateway:
     def StoreSettings(self):
         try:
             # Open Settingsfile - if present
-            file = open("settings.json", "w")
+            file = open("assets/settings.json", "w")
 
             # Make sure UI is synched with background-vars
             self.loadSettingsFromEntry()
@@ -1195,7 +1195,7 @@ class StringNetGateway:
                 # Follow Homie-Conventions
                 devName = self.MQTT_HOMEPATH.replace("/", "")
                 devID = nicefy2HomieID(devName)
-                self.HOMIE_SWITCH_DEVICES = My_Switch(
+                self.HOMIE_SWITCH_DEVICES = Device_Switch(
                     mqtt_settings=self.HOMIE_MQTT_SETTINGS,
                     device_id=devID,
                     device_name=devName

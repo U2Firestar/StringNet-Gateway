@@ -2,35 +2,41 @@
 
 # StringNet-Gateway
 
-Features: 
+**Features:** 
 - GUI for bridging and setting up USB-StringNet-Devices using [StringNet-Firmware](https://github.com/U2Firestar/StringNet-Firmware).
 - Translate between StringNet and MQTT / HomieV4
 - - Homie (V4) - Support (backwards-compatible to HomieV3)
 - Autostart - useful for long-term application
 - Transmission-queues and echo-filtering
 
-Limitations:
+**Limitations:**
 - One instance can handle ONE StringNet-Device
 - Doesn't support addressing (compared to firmware)
 
-This project builds upon following librarys:
+**This project builds upon following librarys and therefor special thanks to:**
 - [Pygubu (+Designer)](https://github.com/alejandroautalan/pygubu-designer) from alejandroautalan @ Github
-- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github (--> [forked for app](https://github.com/U2Firestar/Homie4StringNet))
 - [Eclipse Paho™ MQTT Python Client](https://github.com/eclipse/paho.mqtt.python) from eclipse @ Github
+- [homie4](https://github.com/mjcumming/Homie4) from mjcumming @ Github (--> [forked for app](https://github.com/U2Firestar/Homie4StringNet))
 
-Pre-requisites:
+**Pre-requisites (eventually use "pip3" on raspberry):**
 ~~~~
-pip3 install paho-mqtt
+pip install pygubu
 ~~~~
 ~~~~
-pip3 install git+https://github.com/U2Firestar/Homie4StringNet.git@master
+pip install paho-mqtt
 ~~~~
+~~~~
+pip install git+https://github.com/U2Firestar/Homie4StringNet.git@master
+~~~~
+_Make sure to uninstall homie4 beforehand!_
 
-Therefor special thanks!
 
 About: Project for Bachelorthesis, originally supported by UAS Technikum Vienna and 3S-Sedlak
+
 IDE: PyCharm
+
 Python-Version: 3.10
+
 Versions:
 - 1.0.0 - 08.2021 - Hardcoded initial version
 - 1.1.0 - 09.2021 - Adding UDP-support
