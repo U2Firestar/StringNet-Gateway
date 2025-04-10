@@ -1,50 +1,55 @@
 ## Special thanks and credits to:
-# - Pygubu (+Designer) from alejandroautalan @ Github: https://github.com/alejandroautalan/pygubu-designer
+# - Pyserial
 # - Eclipse Paho™ MQTT Python Client from eclipse @ Github: https://github.com/eclipse/paho.mqtt.python
-# - homie4 from mjcumming @ Github: https://github.com/mjcumming/Homie4
+# - Homie4 from mjcumming @ Github: https://github.com/mjcumming/Homie4
 
-aboutprogramm = "\
+aboutprogramm_bridge = "-----------\n\
 Software: StringNet-Gateway\n\
-Purpose: Serial Programming, device setup, control, and bridging\n\
-Version: 2.2.0 22.12.2023\n\
+Purpose: Serial bridging between StringNet and MQTT\n\
+Version: 3.0.0 05.04.2025\n\
 Author: Emil Sedlacek (U2Firestar, Firestar)\n\
 Originally supported by: UAS Technikum Vienna and 3S-Sedlak\n\
 Note: See README and source-Files of firmware for more info!\n\
+Make options in settings file!\n\
+-----------\
+"
+
+aboutprogramm_programmer = "-----------\n\
+Software: StringNet-programmer\n\
+Purpose: Interactive programmer for StringNet device\n\
+Version: 3.0.0 05.04.2025\n\
+Author: Emil Sedlacek (U2Firestar, Firestar)\n\
+Originally supported by: UAS Technikum Vienna and 3S-Sedlak\n\
+Note: See README and source-Files of firmware for more info!\n\
+Make options in settings file!\n\
+-----------\
 "
 
 ## Imports
-# Standard-Python Setup
-import pathlib
-PROJECT_PATH = pathlib.Path(__file__).parent
-PROJECT_UI = PROJECT_PATH / "assets" / "main.ui"  # Contains all visuals! HARDCODED
-
-import sys
-import platform
+# SYSTEM
 import serial
 
+# Dataformat
 import time
-from datetime import datetime
-from typing import List, Any
 import json
 
+# LOGGING
 import traceback
 import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.WARN)  # DEBUG for Homie-API
 
-import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter import messagebox
-from tkinter.filedialog import askopenfilename, asksaveasfile
+logger = logging.getLogger(__name__)  # SET for getting HOMIE too
 
-# Extern
-import pygubu
+logging.basicConfig(
+    level=logging.INFO,
+    format='[ %(filename)s:%(lineno)s in %(funcName)s() @ %(asctime)s ] %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S %p'
+)
 
+# MQTT / HOMIE
 import paho.mqtt.client as mqtt
 
 from homie.device_switch import Device_Switch
 from homie.node.node_switch import Node_Switch
-from homie.device_base import Device_Base
 
 ## StringNet Functions and Definitions
 GLOBAL_USB_SEND_QUERY = []  # Needed between MainApp & Homie-Implementation - Buffers all StringNet-packages that shall be sent
@@ -53,7 +58,8 @@ GLOBAL_USB_SEND_QUERY = []  # Needed between MainApp & Homie-Implementation - Bu
 COMMANDS = ["FORMAT", "LIFESIGN", "NETMODE", "DISCOVER", "CREATE", "DELETE", "NAME", "PIN", "TYPE",
             "ONSEQUENCE", "OFFSEQUENCE", "PROTOCOLL", "PULSLENGTH", "RF_TX_REP"]
 SUBCOMMANDS = ["TELLALL", "TELLDEV", "TELLGPIO", "TELLRF", "SETDEV", "SETGPIO", "SETRF"]
-STN_STATES = ["ON", "SilentON", "OFF", "SilentOFF", "TOGGLE", "SilentTOGGLE", "STATUS"] #Standard Name States
+STN_STATES = ["ON", "SilentON", "OFF", "SilentOFF", "TOGGLE", "SilentTOGGLE", "STATUS"]  # Standard Name States
+
 
 # Generic Objects and Classes for StringNet-Data-Processing
 class StringNetObject:
@@ -63,12 +69,14 @@ class StringNetObject:
         self.Val_str = Valstr
         self.Val_num = Valnum
 
+
 class StringNetPackage:
     def __init__(self, COM, SUBCOM, Val_num, Val_str):
         self.Com = COM
         self.Subcom = SUBCOM
         self.Val_num = Val_num
         self.Val_str = Val_str
+
 
 # Extraction and check of StringNetPackage
 def checkAndExtractStNPackage(line):
@@ -87,6 +95,7 @@ def checkAndExtractStNPackage(line):
         return line[line.find("{"): line.find("}") + 1]  # Extract StringNetpackage
     else:
         return None
+
 
 def convert2StNPackage(line):
     # Split String into useful format
@@ -113,18 +122,20 @@ def convert2StNPackage(line):
         elif i == 4:
             Val_str = object
         elif i >= 5:
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Too many objects in StringNetPackage!")
+            logger.error("Too many objects in StringNetPackage!")
             break
         i = i + 1
 
-    # print(StringNetPackage(command, subcommand, Val_num, Val_str))
-    # print(len(stringNetPackage))  # DEBUG
+    logger.debug(StringNetPackage(command, subcommand, Val_num, Val_str))
+    logger.debug(len(stringNetPackage))
 
     return StringNetPackage(command, subcommand, Val_num, Val_str)
+
 
 # Globally needed StringNet-Package Wrapper
 def convert2sendablePackage(COM, SUBCOM, VAL_NUM, VAL_STR):
     return "{" + str(COM) + ";" + str(SUBCOM) + ";" + str(VAL_NUM) + ";" + str(VAL_STR) + "}"
+
 
 # Helper for String-Conversion of Booleans
 def convertBool2String(self, boolVal):
@@ -135,41 +146,42 @@ def convertBool2String(self, boolVal):
     else:
         return "NaN"
 
+
 ## MQTT-based Network-Objects and Functions
 # Threaded subcribe-Event for generic-mqtt. Filters and conditionally Buffers to USB-TX-Query
 def genericMQTT_on_message(client, userdata, message):
     global GLOBAL_USB_SEND_QUERY
-    try:
-        # print("datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | on_message() | Incomming Generic-MQTT-Topic: " + message.topic + " with message: ", str(message.payload.decode("utf-8")))  # debug
+    logger.debug("Incomming Generic-MQTT-Topic: " + message.topic + " with message: ",
+                 str(message.payload.decode("utf-8")))
 
-        # Filter for Echos between MQTT-Server <- Bridge -> Arduino
-        if "/STATUS" not in message.topic:
-            # convert MQTT-Strcuture to Stringnet:  root/xyz payload  --> {xyz;payload}
-            workBuffer = message.topic.split('/')
-            i = 1
-            command = ""
-            for object in workBuffer:
-                if i == 1:
-                    pass                    # not further interesting - contains root
-                elif i == 2:
-                    command = object  # contains xyz
-                # Check if the positions are correct: If there are postions after - they are ignored!
-                elif i >= 3:
-                    print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | on_message() | Warning : Too many objects in workBuffer as StringNetPackage!")
-                    break
-                i = i + 1
+    # Filter for Echos between MQTT-Server <- Bridge -> Arduino
+    if "/STATUS" in message.topic:
+        logger.warning("Ignored: " + str(message.topic) + " and message: " + str(message.payload.decode("utf-8")))
+        return
 
-            # Wrapp the Package
-            workBuffer = convert2sendablePackage(command, message.payload.decode("utf-8"), "", "")
+    # convert MQTT-Strcuture to Stringnet:  root/xyz payload  --> {xyz;payload}
+    workBuffer = message.topic.split('/')
+    i = 1
+    command = ""
+    for object in workBuffer:
+        if i == 1:
+            pass  # not further interesting - contains root
+        elif i == 2:
+            command = object  # contains xyz
+        # Check if the positions are correct: If there are postions after - they are ignored!
+        elif i >= 3:
+            logger.warning("Too many objects in workBuffer as StringNetPackage!")
+            break
+        i = i + 1
 
-            # Eliminate double-sending
-            if workBuffer not in GLOBAL_USB_SEND_QUERY:
-                GLOBAL_USB_SEND_QUERY.append(workBuffer)
-                print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | on_message() | Querying: " + workBuffer)
-        else:
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | on_message() | Ignored: " + message.topic + " and message: " + str(message.payload.decode("utf-8")))
-    except:
-        traceback.print_exc()
+    # Wrapp the Package
+    workBuffer = convert2sendablePackage(command, message.payload.decode("utf-8"), "", "")
+
+    # Eliminate double-sending
+    if workBuffer not in GLOBAL_USB_SEND_QUERY:
+        GLOBAL_USB_SEND_QUERY.append(workBuffer)
+        logger.info("Querying: " + str(workBuffer))
+
 
 # Wrapper to match Homie-Librarys Needs
 def nicefy2HomieID(string):
@@ -182,52 +194,54 @@ def nicefy2HomieID(string):
 
     return string
 
+
 ## Modifcations in HOMIEV4-Implementation
-class STN_Device_Switch(Device_Switch): # Basically fully modified
+class STN_Device_Switch(Device_Switch):  # Basically fully modified
     def __init__(
-        self, device_id=None, device_name="Switch Device", homie_settings=None, mqtt_settings=None
+            self, device_id=None, device_name="Switch Device", homie_settings=None, mqtt_settings=None
     ):
         super().__init__(device_id, device_name, homie_settings, mqtt_settings)
 
         self.TOPIC_BUFFER = []
         self.STATE_BUFFER = []
+
     def update_switch(self, onoff, node_id):  # sends updates to clients
         self.get_node(node_id).update_switch(onoff)  # pick out node needed to be updated --> set_switch()
         logger.debug("Switch Update {}".format(onoff))
 
     def set_switch(self, onoff):  # received commands from clients
         # First: Check coherence of Buffers from device_base.py
-        if len(self.TOPIC_BUFFER) > 0 and len(self.STATE_BUFFER) > 0:
-            if len(self.TOPIC_BUFFER) != len(self.STATE_BUFFER):
-                print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | set_switch() | Warning: There is an inconsistence between buffers!")
+        if len(self.TOPIC_BUFFER) == 0 or len(self.STATE_BUFFER) == 0:
+            logger.error("Error in causal query for Homie with\nTopicBuffer: " + str(
+                self.TOPIC_BUFFER) + ", State Buffer: " + str(self.STATE_BUFFER))
 
-            global GLOBAL_USB_SEND_QUERY
-            iteration = 0
+        if len(self.TOPIC_BUFFER) != len(self.STATE_BUFFER):
+            logger.warning("There is an inconsistence between buffers!")
 
-            # loops through whole selfmade homie-topic-state-buffer
-            for topic, state in zip(self.TOPIC_BUFFER, self.STATE_BUFFER):
-                topic = topic.replace("switch", "", 1)  # Always in it and confuses following node-check
+        global GLOBAL_USB_SEND_QUERY
+        iteration = 0
 
-                # Check if a stored node is namend within the topic
-                for node in self.nodes:
-                    # print(topic, node, state, onoff) # DEBUG
-                    if node in topic:
-                        workBuffer = convert2sendablePackage(self.nodes[node].name, onoff, "", "") # convert2sendablePackage-function needs to be known before import!
+        # loops through whole selfmade homie-topic-state-buffer
+        for topic, state in zip(self.TOPIC_BUFFER, self.STATE_BUFFER):
+            topic = topic.replace("switch", "", 1)  # Always in it and confuses following node-check
 
-                        # Eliminate double-sending
-                        if workBuffer not in GLOBAL_USB_SEND_QUERY:
-                            GLOBAL_USB_SEND_QUERY.append(workBuffer)
-                            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | set_switch() | Querying 2 USB: " + workBuffer)
+            # Check if a stored node is namend within the topic
+            for node in self.nodes:
+                logger.debug(str(topic) + str(node) + str(state) + str(onoff))
+                if node in topic:
+                    workBuffer = convert2sendablePackage(self.nodes[node].name, onoff, "",
+                                                         "")  # convert2sendablePackage-function needs to be known before import!
 
-                        # Free topic-state-pair
-                        self.TOPIC_BUFFER.pop(iteration)
-                        self.STATE_BUFFER.pop(iteration)
-                        iteration = iteration - 1
-                iteration = iteration + 1
-        else:
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | set_switch() | Error in causal query for Homie with ...")
-            print("TopicBuffer:", self.TOPIC_BUFFER)
-            print("State Buffer", self.STATE_BUFFER)
+                    # Eliminate double-sending
+                    if workBuffer not in GLOBAL_USB_SEND_QUERY:
+                        GLOBAL_USB_SEND_QUERY.append(workBuffer)
+                        logger.info("Querying 2 USB: " + workBuffer)
+
+                    # Free topic-state-pair
+                    self.TOPIC_BUFFER.pop(iteration)
+                    self.STATE_BUFFER.pop(iteration)
+                    iteration = iteration - 1
+            iteration = iteration + 1
 
         Device_Switch.set_switch(self, onoff)
 
@@ -241,105 +255,14 @@ class STN_Device_Switch(Device_Switch): # Basically fully modified
 
         super().mqtt_on_message(topic, payload, retain, qos)
 
+
 ## Main Class of the complete UI
-class StringNetGateway:
+class rf_gateway:
     # Building and Init of UI
     def __init__(self, master=None):
-        ## Build Base-UI
-        self.builder = builder = pygubu.Builder()
-        builder.add_resource_path(PROJECT_PATH)
-        builder.add_from_file(PROJECT_UI)
-        self.mainwindow = builder.get_object('mainWindow', master)
-
-        self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_closing_mainWindow)  # Add close-event
-
-        # Buffer synced with UI
-        self.enableMQTTbridge = None
-        self.enableHomieBridge = None
-        self.autostartBridge = None
-        self.USB_PORT = None
-        self.USB_BAUDRATE = None
-        self.USB_TIMEOUT = None
-        self.USB_HOST_NAME = None
-        self.MQTT_BROKER_IP = None
-        self.MQTT_BROKER_PORT = None
-        self.MQTT_HOMEPATH = None
-        self.MQTT_TIMEOUT = None
-        self.MQTT_QOS = None
-
-        # Volatile UI-I/O
-        self.autostartBridgeCheckVal = None
-        self.networkModeCheckVal = None
-        self.toggleUSBConnBtnTxt = None
-        self.USBPortEntryVal = None
-        self.USBBaudrateEntryVal = None
-        self.USBHostEntryVal = None
-        self.USBReadTimeoutEntryVal = None
-        self.USBPortCheckVal = None
-        self.USBBaudrateCheckVal = None
-        self.USBHostCheckVal = None
-        self.USBReadTimeoutCheckVal = None
-        self.toggleMQTTConnBtnTxt = None
-        self.enableGenMQTTBridgeBtnVal = None
-        self.enableHomieBridgeBtnVal = None
-        self.MQTTBrokerIPEntryVal = None
-        self.MQTTBrokerPortEntryVal = None
-        self.MQTTHomepathEntryVal = None
-        self.MQTTQOSEntryVal = None
-        self.MQTTBrokerIPCheckVal = None
-        self.MQTTBrokerPortCheckVal = None
-        self.MQTTHomepathCheckVal = None
-        self.MQTTQOSCheckVal = None
-        self.manualPackageEntryText = None
-        self.aboutsoftwareVar = None
-        self.statusText = None
-        builder.import_variables(self, ['autostartBridgeCheckVal', 'networkModeCheckVal', 'toggleUSBConnBtnTxt',
-                                        'USBPortEntryVal', 'USBBaudrateEntryVal', 'USBHostEntryVal',
-                                        'USBReadTimeoutEntryVal', 'USBPortCheckVal', 'USBBaudrateCheckVal',
-                                        'USBHostCheckVal', 'USBReadTimeoutCheckVal', 'toggleMQTTConnBtnTxt',
-                                        'enableGenMQTTBridgeBtnVal', 'enableHomieBridgeBtnVal', 'MQTTBrokerIPEntryVal',
-                                        'MQTTBrokerPortEntryVal', 'MQTTHomepathEntryVal', 'MQTTQOSEntryVal',
-                                        'MQTTBrokerIPCheckVal', 'MQTTBrokerPortCheckVal', 'MQTTHomepathCheckVal',
-                                        'MQTTQOSCheckVal', 'manualPackageEntryText', 'aboutsoftwareVar', 'statusText'])
-
-        builder.connect_callbacks(self)
-
-        # Load References and make Objects accessable
-        self.appNotebook = self.builder.get_object("appNotebook", self.mainwindow)  # Tabs
-
-        self.toggleBridgeBtn = self.builder.get_object("toggleBridgeBtn", self.mainwindow)
-        self.toggleFWEditorBtn = self.builder.get_object("toggleFWEditorBtn", self.mainwindow)
-
-        self.toggleUSBConnBtn = self.builder.get_object("toggleUSBConnBtn", self.mainwindow)
-        self.USBPortEntry = self.builder.get_object("USBPortEntry", self.mainwindow)
-        self.USBBaudrateEntry = self.builder.get_object("USBBaudrateEntry", self.mainwindow)
-        self.USBHostEntry = self.builder.get_object("USBHostEntry", self.mainwindow)
-        self.USBReadTimeoutEntry = self.builder.get_object("USBReadTimeoutEntry", self.mainwindow)
-
-        self.toggleMQTTConnBtn = self.builder.get_object("toggleMQTTConnBtn", self.mainwindow)
-        self.MQTTBrokerIPEntry = self.builder.get_object("MQTTBrokerIPEntry", self.mainwindow)
-        self.MQTTBrokerPortEntry = self.builder.get_object("MQTTBrokerPortEntry", self.mainwindow)
-        self.MQTTHomepathEntry = self.builder.get_object("MQTTHomepathEntry", self.mainwindow)
-        self.MQTTQOSEntry = self.builder.get_object("MQTTQOSEntry", self.mainwindow)
-
-        self.startBridgeBtn = self.builder.get_object("startBridgeBtn", self.mainwindow)
-        self.stopBridgeBtn = self.builder.get_object("stopBridgeBtn", self.mainwindow)
-
-        self.StringNetObjectList = self.builder.get_object("StringNetObjectList", self.mainwindow)
-        self.StringNetObjectList.bind("<<TreeviewSelect>>", self.onFWERowClick)
-        self.ComQueList = self.builder.get_object("ComQueList", self.mainwindow)
-        self.ComQueList.bind("<<TreeviewSelect>>", self.onQueRowClick)
-
-        self.loadClistFileBtn = self.builder.get_object("loadClistFileBtn", self.mainwindow)
-        self.saveAsClistFileBtn = self.builder.get_object("saveAsClistFileBtn", self.mainwindow)
-        self.clearQueBtn = self.builder.get_object("clearQueBtn", self.mainwindow)
-        self.sendClistQueBtn = self.builder.get_object("sendClistQueBtn", self.mainwindow)
-
-        ## Setup UI-independent variables
-        self.UI_State = "I"  # I ... Init, S ... Setup, B ... Bridge-Mode, F ... FWE-Mode
-        self.SettingsLoadable = False
-        self.BRIDGE_KILLSIGNAL = False
-        self.pauseProcessing = False
+        self.mode = None
+        self.enableMQTTbridge = False
+        self.enableHomieBridge = False
 
         # USB - Interaction
         self.StringNetPackageBuffer = []  # Holds received Packages from USB to Filter-Interpret Objects
@@ -347,14 +270,22 @@ class StringNetGateway:
         self.StringNetInteractionObjectBuffer = []  # Holds interactable Objects besides System-Commands
         self.StringNetInteractionNumValsBuffer = [0,
                                                   60000]  # Holds numbers of interactable Objects besides System-Commands
-        self.USB_CON_PARTNER = ""  # Buffers newest Device-Name
+
         self.USB_CON = None
-        self.USB_OK = False
+        self.USB_PORT = None
+        self.USB_BAUDRATE = None
+        self.USB_TIMEOUT = None
+        self.USB_HOST_NAME = None
         self.USB_SINGLEBUFFER_SIZE = 200
 
-        # MQTT-Generic - Interaction
+        # MQTT-Generic
+        self.MQTT_BROKER_IP = None
+        self.MQTT_BROKER_PORT = None
+        self.MQTT_HOMEPATH = None
+        self.MQTT_TIMEOUT = None
+        self.MQTT_QOS = None
+
         self.MQTT_CON = None
-        self.MQTT_OK = False
 
         # MQTT-Homie - Interaction
         self.HOMIE_MQTT_SETTINGS = {
@@ -364,354 +295,19 @@ class StringNetGateway:
             # The root is /homie
         }
         self.HOMIE_SWITCH_DEVICES = None  # stores many nodes in it
-        self.HOMIE_DISCOVER_INTERVAL = 24 * 60 * 60  # in seconds
-        self.HOMIE_DISCOVER_LAST_TIME = time.time() - self.HOMIE_DISCOVER_INTERVAL + 30  # HARDCODED WAITING
 
-        ## Limit and Setting UI-Options
-        self.appNotebook.tab(2, state='disabled')  # FW Editor
-        self.appNotebook.tab(3, state='disabled')  # Que
+        self.DISCOVER_INTERVAL = 60 * 60  # in seconds
+        self.LAST_DISCOVER = time.time() - self.DISCOVER_INTERVAL  # force first discovery
 
-        self.stopBridgeBtn["state"] = 'disabled'
-        self.startBridgeBtn["state"] = 'disabled'
+        logger.info("Stringnet-Gateway Init complete!")
 
-        ## Reload Settings
-        self.statusText.set("Status | Loading Setttings!")
-
-        self.aboutsoftwareVar.set(aboutprogramm)
-
-        self.UI_State = "S"
-        self.OpenSettingsFile()
-        self.loadSettingsToEntry()
-
-        self.statusText.set("Status | Application initialized!")
-        print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | run() | Stringnet-Gateway Init complete!")
-
-    # Actually jumpstarting UI
-    def run(self):
-        ## Run conditional autotstart first and loop routine
-        print(datetime.now().strftime(
-            "%d/%m/%Y, %H:%M:%S") + " | run() | Stringnet-Gateway started. Running conditional autostart now...")
-        secondsCntDown = 10  # HARDCODED
-
-        # Count Down and Update Windows meanwhile
-        while self.autostartBridgeCheckVal.get() == 1 and secondsCntDown > 0:
-            self.statusText.set("Status | Autostart Bridge in " + str(
-                secondsCntDown) + " seconds! Abort by unchecking Autostart of Bridge.")
-            for s in range(1, 20):
-                time.sleep(0.05)
-                self.mainwindow.update()  # Needed for simultanious UI-Inputs
-                if self.autostartBridgeCheckVal.get() == 0:
-                    self.statusText.set("Status | Autostart of Bridge canceled!")
-            secondsCntDown = secondsCntDown - 1
-
-        # Run Autostart as autostart-option is still checked
-        if self.autostartBridgeCheckVal.get() == 1:
-            self.statusText.set("Status | Autostart - Prepartion in progress!")
-            self.mainwindow.update()
-            time.sleep(0.1)
-
-            # Lead to correct UI-State
-            if self.UI_State == "F":
-                self.toggleFWEditorUpdate()
-                self.mainwindow.update()
-                time.sleep(0.1)
-            if self.UI_State == "S":
-                self.statusText.set("Status | Autostart - Checking connections!")
-                self.mainwindow.update()
-                time.sleep(0.1)
-
-                # Prepair Connections to change to Bridge-Mode
-                self.testUSBConn()
-                self.testMQTTConn()
-
-                # change if Successfull
-                self.toggleBridgeUpdate()
-
-            # Check wether Entering Bridge-Mode was successfull
-            if self.UI_State == "B":
-                self.statusText.set("Status | Autostart - Activating Bridge!")
-                self.mainwindow.update()
-                time.sleep(0.1)
-                self.startBridge()
-            else:
-                self.statusText.set("Error | Autostart of Bridge failed!")
-
-        else:
-            ## Run blocking main-loop
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | run() | Stringnet-Gateway idling...")
-            self.statusText.set("Status | Program idling...")
-
-        self.mainwindow.mainloop()
-
-    ## Window-Creater and Opener, if existant
-    # Open Object - Editor - Is an Object which makes it easier to create StringNet-Packages
-    def openObjectEditor(self):
-        try:
-            # Initialize Window
-            self.stringNetObjectEditor = self.builder.get_object('stringNetObjectEditor', self.mainwindow)
-
-            self.stringNetObjectEditor.protocol("WM_DELETE_WINDOW", self.on_closing_editor)
-
-            # Make Variables accessable
-            self.comChooserComboboxTxt = None
-            self.subcomChooserComboboxTxt = None
-            self.valnumChooserComboboxTxt = None
-            self.valstrChooserComboboxTxt = None
-            self.builder.import_variables(self,
-                                          ['comChooserComboboxTxt', 'subcomChooserComboboxTxt',
-                                           'valnumChooserComboboxTxt',
-                                           'valstrChooserComboboxTxt'])
-
-            # Make Objects accessable
-            self.comChooserCombobox = self.builder.get_object("comChooserCombobox", self.mainwindow)
-            self.subcomChooserCombobox = self.builder.get_object("subcomChooserCombobox", self.mainwindow)
-            self.valnumChooserCombobox = self.builder.get_object("valnumChooserCombobox", self.mainwindow)
-            self.valstrChooserCombobox = self.builder.get_object("valstrChooserCombobox", self.mainwindow)
-
-            # Finish building
-            self.builder.connect_callbacks(self)
-        except:
-            self.statusText.set("Error | Could not create Object-Editor properly!")
-            traceback.print_exc()
-
-        try:
-            # Update Content and Show Window
-            self.rebuildObjectEditorLists()
-            self.stringNetObjectEditor.deiconify()
-        except:
-            self.statusText.set("Error | Could not update and show Object Editor!")
-
-    ### Window HANDLER
-    # Row-Click on Que
-    def onQueRowClick(self, extra):
-        try:
-            index = self.ComQueList.selection()[0]
-            try:
-                package = self.ComQueList.item(index)["values"][0]
-                if package != "":
-                    self.manualPackageEntryText.set(package)
-            except:
-                traceback.print_exc()
-        except:
-            pass
-
-    # Row-Click on Que
-    def onFWERowClick(self, extra):
-        try:
-            index = self.StringNetObjectList.selection()[0]
-            try:
-                package = ""
-                for value in self.StringNetObjectList.item(index)["values"]:
-                    package = package + " " + str(value)
-                if package != "":
-                    self.manualPackageEntryText.set(package)
-            except:
-                traceback.print_exc()
-        except:
-            pass
-
-    # Row-Click in Object List
-    def onObjectListRowClick(self, extra):
-        try:
-            index = self.StringNetObjectList.selection()[0]
-            try:
-                package = self.StringNetObjectList.item(index)["values"][0]
-                if package != "":
-                    self.manualPackageEntryText.set(package)
-            except:
-                traceback.print_exc()
-        except:
-            pass
-
-    # Event on Closing MainWindow
-    def on_closing_mainWindow(self):
-        self.pauseProcessing = True
-        if messagebox.askokcancel("Quit program?", "Are you sure you want to close all connections and the program?"):
-            self.try2closeUSBConnection()
-            self.try2closeMQTTConnection()
-            self.mainwindow.destroy()  # Leads back to run()
-        self.pauseProcessing = False
-
-    # Event on Closing Editor
-    def on_closing_editor(self):
-        self.pauseProcessing = True
-        if messagebox.askokcancel("Close Editor?", "Are you sure you want hide the editor?"):
-            self.stringNetObjectEditor.withdraw()
-        self.pauseProcessing = False
-
-    ### UI-issued functions
-    ## Instruction Tab
-    def autostartBridgeCheckUpdate(self):
-        if self.autostartBridgeCheckVal.get() == 0:
-            self.autostartBridge = False
-        else:
-            self.autostartBridge = True
-        self.statusText.set("Warning | Autostart-option changed! Don't forget to save!")
-
-    def networkModeUpdate(self):
-        # TODO: Address-Mode
-        pass
-
-    def toggleBridgeUpdate(self):
-        if self.UI_State != "B":
-            if not self.SettingsLoadable:
-                self.statusText.set("Error | Settings not loaded yet!")
-            elif not self.USB_OK or not self.MQTT_OK:
-                self.statusText.set("Error | At least one connection invalid! Please try again!")
-                if not self.USB_OK:
-                    self.toggleUSBConn()
-                if not self.MQTT_OK:
-                    self.toggleMQTTConn()
-            else:
-                self.toggleFWEditorBtn["state"] = 'disabled'
-                self.startBridgeBtn["state"] = "normal"
-                self.UI_State = "B"
-                self.statusText.set("Status | Autostart - Changing to Bridge-Section!")
-                self.appNotebook.select(0)  # Change to Instructions
-
-        elif self.UI_State == "B":
-            self.toggleFWEditorBtn["state"] = 'normal'
-            self.UI_State = "S"
-            self.stopBridge()
-            self.appNotebook.select(0)  # Change to Instructions
-
-    def toggleFWEditorUpdate(self):
-        if self.UI_State != "F":
-            if not self.SettingsLoadable:
-                self.statusText.set("Error | Settings not loaded yet!")
-            elif not self.USB_OK:
-                self.statusText.set("Error | USB-connection-state not valid! Trying to open... Please retry then!")
-                self.toggleUSBConn()
-            else:
-                self.appNotebook.tab(2, state='normal')  # FW Editor
-                self.appNotebook.tab(3, state='normal')  # Que
-                self.toggleBridgeBtn["state"] = 'disabled'
-                self.startBridgeBtn["state"] = "disabled"
-                self.UI_State = "F"
-                self.statusText.set("Status | Autostart - Changing to FWE-Tab!")
-                self.appNotebook.select(2)  # Change to FWE
-                self.openObjectEditor()
-
-                # Tell and Loop
-                self.statusText.set("Status | Firmware Editor active!")
-                self.mainwindow.after(100, self.FirmwareEditorMode)
-
-        elif self.UI_State == "F":
-            self.appNotebook.tab(2, state='disabled')  # FW Editor
-            self.appNotebook.tab(3, state='disabled')  # Que
-            self.toggleBridgeBtn["state"] = 'normal'
-            self.UI_State = "S"
-            self.appNotebook.select(0)  # Change to Instructions
-            self.statusText.set("Status | Exiting FWE and changing to Instructions-Tab!")
-
-    ## Settings-Tab
-    # USB-Specific Check-Updates and Buttonpresses
-    def USBPortCheck(self):
-        if self.USBPortCheckVal.get() == 1:
-            self.USBPortEntry["state"] = "normal"
-        else:
-            self.USBPortEntry["state"] = "disabled"
-
-    def USBBaudrateCheck(self):
-        if self.USBBaudrateCheckVal.get() == 1:
-            self.USBBaudrateEntry["state"] = "normal"
-        else:
-            self.USBBaudrateEntry["state"] = "disabled"
-
-    def USBHostCheck(self):
-        if self.USBHostCheckVal.get() == 1:
-            self.USBHostEntry["state"] = "normal"
-        else:
-            self.USBHostEntry["state"] = "disabled"
-
-    def USBReadTimeoutCheck(self):
-        if self.USBReadTimeoutCheckVal.get() == 1:
-            self.USBReadTimeoutEntry["state"] = "normal"
-        else:
-            self.USBReadTimeoutEntry["state"] = "disabled"
-
-    def toggleUSBConn(self):
-        if self.USB_OK:
-            self.try2closeUSBConnection()
-        else:
-            self.testUSBConn()
-
-    # MQTT-specific Check-Updates and Buttonpresses
-    def enableGenMQTTBridgeBtn(self):
-        if self.enableGenMQTTBridgeBtnVal.get() == 1:
-            self.enableMQTTbridge = True
-            if self.enableHomieBridge == True:
-                self.statusText.set("Warning | Avoid to run bridge with both chosen MQTT-Option!")
-        else:
-            self.enableMQTTbridge = False
-            if self.enableHomieBridge == False:
-                self.statusText.set("Warning | Avoid to run bridge without chosen MQTT-Option!")
-
-    def enableHomieBridgeBtn(self):
-        if self.enableHomieBridgeBtnVal.get() == 1:
-            self.enableHomieBridge = True
-            if self.enableMQTTbridge == True:
-                self.statusText.set("Warning | Avoid to run bridge with both chosen MQTT-Option!")
-        else:
-            self.enableHomieBridge = False
-            if self.enableMQTTbridge == False:
-                self.statusText.set("Warning | Avoid to run bridge without any chosen MQTT-Option!")
-
-    def MQTTBrokerIPCheck(self):
-        if self.MQTTBrokerIPCheckVal.get() == 1:
-            self.MQTTBrokerIPEntry["state"] = "normal"
-        else:
-            self.MQTTBrokerIPEntry["state"] = "disabled"
-
-    def MQTTBrokerPortCheck(self):
-        if self.MQTTBrokerPortCheckVal.get() == 1:
-            self.MQTTBrokerPortEntry["state"] = "normal"
-        else:
-            self.MQTTBrokerPortEntry["state"] = "disabled"
-
-    def MQTTHomepathCheck(self):
-        if self.MQTTHomepathCheckVal.get() == 1:
-            self.MQTTHomepathEntry["state"] = "normal"
-        else:
-            self.MQTTHomepathEntry["state"] = "disabled"
-
-    def MQTTQOSCheck(self):
-        if self.MQTTQOSCheckVal.get() == 1:
-            self.MQTTQOSEntry["state"] = "normal"
-        else:
-            self.MQTTQOSEntry["state"] = "disabled"
-
-    def toggleMQTTConn(self):
-        if self.MQTT_OK:
-            self.try2closeMQTTConnection()
-        else:
-            self.testMQTTConn()
-
-    # Persistance
-    def OpenSettingsFileChoose(self):
-        # Triggers the standard procedur of open a settings file differently - by opening a File-Window
-        self.OpenSettingsFile(ask="")
-
-    def OpenSettingsFile(self, ask=None):
-        # Choosing the wanted settings-file - dependend on Variable
-        if ask is not None:
-            # show an "Open" dialog box and return the path to the selected file
-            newPath = askopenfilename(initialfile="assets/settings.json",
-                                      title="Open Settingsfile for StringNet-Gateway",
-                                      filetypes=(("JSON", "*.json"),
-                                                 ("All files",
-                                                  "*.*")))
-        else:
-            newPath = "assets/settings.json"
-
-        # Check if it is not empty
-        if len(newPath) > 0:
-            # print(newPath) #DEBUG
-            pass
+    def OpenSettingsFile(self):
+        path = "settings.json"
+        logger.info("Checking on: " + path)
 
         try:
             # Open File
-            file = open(newPath, encoding='utf-8')
+            file = open(path, encoding='utf-8')
 
             # parse JSON to data-Object
             data = json.load(file)
@@ -719,11 +315,10 @@ class StringNetGateway:
             # Close File
             file.close()
 
-            # Load all gathered information into UI
-            self.autostartBridge = data["autostartBridge"]
+            # Load information, return true if valid
+            self.mode = data["mode"]
             self.enableMQTTbridge = data["enableMQTTbridge"]
             self.enableHomieBridge = data["enableHomieBridge"]
-
             self.USB_PORT = data["USB_PORT"]
             self.USB_BAUDRATE = data["USB_BAUDRATE"]
             self.USB_TIMEOUT = data["USB_TIMEOUT"]
@@ -734,26 +329,38 @@ class StringNetGateway:
             self.MQTT_TIMEOUT = data["MQTT_TIMEOUT"]
             self.MQTT_QOS = data["MQTT_QOS"]
 
-            # If all Settings where present: Say so
-            self.SettingsLoadable = True
-            self.statusText.set("Status | Settingsfile successfully loaded!")
+            self.HOMIE_MQTT_SETTINGS = {
+                "MQTT_BROKER": self.MQTT_BROKER_IP,
+                "MQTT_PORT": self.MQTT_BROKER_PORT,
+                "MQTT_SHARE_CLIENT": True  # limited ressources and many "devices" == objects!
+                # The root is /homie
+            }
+
+            return True
+
         except:
-            # If not: Tell as well!
+            logger.error("Settings not correct! Will create/overwrite with non-runable stockvalues!")
             self.ResetSettings()
-            self.statusText.set("Error | Settingsfile not loaded! Leading to reset!")
-        finally:
-            self.loadSettingsToEntry()
+            self.StoreSettings()
+            exit(2)  # early exit
 
     def ResetSettings(self):
         ## Load all stock-settings to UI
         # Setup Vars
-        self.USB_OK = False
-        self.MQTT_OK = False
-        self.SettingsLoadable = False
-
         self.enableMQTTbridge = False
-        self.enableHomieBridge = True
-        self.autostartBridge = False
+        self.enableHomieBridge = False
+
+        while True:
+            logger.error("\nYou may choose which MODE the Settings shall up into!\n"
+                  "1 - BRIDGE\n"
+                  "2 - PROGRAMMER")
+            choice = input("\nPlease choose: ")
+            if choice == "1":
+                self.mode = "BRIDGE"
+                break
+            elif choice == "2":
+                self.mode = "PROGRAMMER"
+                break
 
         self.USB_PORT = "COMx or /dev/ttyUSB0"
         self.USB_BAUDRATE = 115200
@@ -765,33 +372,18 @@ class StringNetGateway:
         self.MQTT_TIMEOUT = 60  # Keeps Connection open for x Sec. # HARDCODED
         self.MQTT_QOS = 1  # 0: fire and forget, 1: at least once, 2: make sure once
 
-        # Reset Checks
-        self.USBPortCheckVal.set(0)
-        self.USBBaudrateCheckVal.set(0)
-        self.USBHostCheckVal.set(0)
-        self.USBReadTimeoutCheckVal.set(0)
-        self.MQTTBrokerIPCheckVal.set(0)
-        self.MQTTBrokerPortCheckVal.set(0)
-        self.MQTTHomepathCheckVal.set(0)
-        self.MQTTQOSCheckVal.set(0)
-
-        # Backload and feedback
-        self.loadSettingsToEntry()
-        self.statusText.set("Status | Settings reset! Don't forget to save.")
-
     def StoreSettings(self):
         try:
-            # Open Settingsfile - if present
-            file = open("assets/settings.json", "w")
+            path = "settings.json"
 
-            # Make sure UI is synched with background-vars
-            self.loadSettingsFromEntry()
+            # Open Settingsfile - if present
+            file = open(path, "w")
 
             # Pack all data to JSON-compatible format
             data = {
+                "mode": self.mode,
                 "enableMQTTbridge": self.enableMQTTbridge,
                 "enableHomieBridge": self.enableHomieBridge,
-                "autostartBridge": self.autostartBridge,
                 "USB_HOST_NAME": self.USB_HOST_NAME,
                 "USB_PORT": self.USB_PORT,
                 "USB_BAUDRATE": self.USB_BAUDRATE,
@@ -810,452 +402,90 @@ class StringNetGateway:
             file.close()
 
             # Tell sucess
-            self.statusText.set("Status | Settingsfile successfully saved!")
+            logger.info("Settingsfile successfully saved to: " + path)
         except:
-            self.statusText.set("Error | Saving Settingsfile failed!")
+            logger.error("Saving settingsfile saved to: " + path + " failed!")
 
-    ## Bridge-Section in Main
-    def startBridge(self):
-        # Retest Connections
-        self.testUSBConn()
-        self.testMQTTConn()
-
-        # If all OK, init of Bridge
-        if self.USB_OK and self.MQTT_OK:
-            self.statusText.set("Status | Start Bridge - Activating Bridge!")
-            self.mainwindow.update()
-            time.sleep(0.1)
-
-            # Toggle available Btns in UI
-            self.startBridgeBtn["state"] = "disabled"
-            self.stopBridgeBtn["state"] = "normal"
-
-            # Start actual bridge
-            global GLOBAL_USB_SEND_QUERY
-            self.BRIDGE_KILLSIGNAL = False
-
-            # Tell and Enter Loop
-            self.statusText.set("Status | Bridge active!")
-            self.mainwindow.after(100, self.USB2MQTT_BRIDGE)
-        else:
-            self.statusText.set("Error | Could not start Bridge as not all connections setup!")
-
-    def stopBridge(self):
-        # Toggle available Btns in UI
-        self.startBridgeBtn["state"] = "normal"
-        self.stopBridgeBtn["state"] = "disabled"
-        self.BRIDGE_KILLSIGNAL = True
-
-        # Tell it's done
-        self.statusText.set("Status | Bridge deactivated!")
-
-    ## FWE-Tab
-    def DISCOVER(self):
-        # If FWE-Mode the DISCOVER-Function ask for all initial objects instead of simple Name-State-Pair
-        if self.UI_State == "F":
-            # Reset FWE-UI
-            self.clearObjectList()
-
-            # Issue StringNet-Packages
-            GLOBAL_USB_SEND_QUERY.append("{NAME;TELLDEV}")  # HARDCODED
-            GLOBAL_USB_SEND_QUERY.append("{NETMODE;TELLDEV}")  # HARDCODED
-            GLOBAL_USB_SEND_QUERY.append("{LIFESIGN;TELLDEV}")  # HARDCODED
-
-            for i in range(1, 30):  # HARDCODED calculated space for Arduino Nano
-                GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLGPIO;" + str(i) + "}")  # HARDCODED
-                GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLRF;" + str(i) + "}")  # HARDCODED
-        else:
-            GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLALL}")  # to memorize all objects # HARDCODED
-
-    def formatDEV(self):
-        # Prevent Missclicks
-        self.pauseProcessing = True
-        if messagebox.askokcancel("Format StringNet-Device?",
-                                  "Are you sure you want to wipe the over USB/StringNet connected devices' configuration ?"):
-            # Issue Package
-            GLOBAL_USB_SEND_QUERY.append("{FORMAT;;69}")  # HARDCODED  MagicNumber
-        self.pauseProcessing = False
-
-    def clearObjectList(self):
-        # Reset Buffer and Update UI
-        self.StringNetPackageBuffer = []
-        self.loadObjectBuffer2UI()
-
-    ## Que-Editor-Tab
-    # Command Que-Actions
-    def loadClistFile(self):
-        # show an "Open" dialog box and return the path to the selected file
-        filename = askopenfilename(initialfile="demo.clist",
-                                   title="Open Command-List-Script-File",
-                                   filetypes=(("C-List files", "*.clist"),
-                                              ("All files", "*.*"))
-                                   )
-
-        # If not an empty string...
-        if len(filename) > 0:
-            # print(filename)
-
-            try:
-                self.clearClistQue()  # Clean up before loading
-
-                # Read all Lines of File and close
-                file = open(filename, encoding='utf-8')
-                lines = file.readlines()
-                file.close()
-
-                # Iterate through all lines
-                for line in lines:
-                    # Determine, whether Line is commented and shall not be loaded
-                    if "#" in line:
-                        if line.find("#") <= line.find("{"):  # if comment is before package
-                            continue
-
-                    # Check for correct Sequences
-                    strnPackage = checkAndExtractStNPackage(line)
-                    if strnPackage != None:
-                        # Copy Package to Que-List
-                        # print(line, strnPackage) #DEBUG
-                        self.StringNetSendListBuffer.append(
-                            line)  # line instead of strnPackage to make Comments possible
-
-                # Tell success as no error occured
-                self.statusText.set("Status | C-List-File successfully loaded!")
-
-            except:
-                self.statusText.set("Error | C-List-File not loaded!")
-            finally:
-                # UI has to be updated - even tho there was an error
-                self.loadClistBuffer2UI()
-
-    def saveAsClistFile(self):
-        # show an "Open" dialog box and return the path to the selected file
-        filename = asksaveasfile(
-            initialfile="new.clist",
-            title="Save Command-List-Script-File",
-            defaultextension='.clist',
-            filetypes=(("C-List files", "*.clist"),
-                       ("All files", "*.*"))
-        )
-
-        # Check for valid path
-        if filename is not None and filename.name != "":
-            # print(filename.name) #DEBUG
-            filename = filename.name
-
-            try:
-                # Open file to write
-                file = open(filename, encoding='utf-8', mode="w")
-
-                # Write a header
-                file.writelines("# Autogenerated c-list-file!\n")
-
-                # Go through all list-elements and write them down
-                for item in self.ComQueList.get_children():
-                    for value in self.ComQueList.item(item)['values']:
-                        # print(value)
-                        # Ensure that line is at least a StringNet-Package
-                        try:
-                            package = checkAndExtractStNPackage(value)
-                            if package != None:
-                                file.writelines(value)  # value instead of package to make Comments possible
-                        except:
-                            self.statusText.set("Warning | C-List-File writing-Error!")
-
-                # Operation done - close file and tell success
-                file.close()
-                self.statusText.set("Status | C-List-File successfully saved!")
-            except:
-                self.statusText.set("Error | C-List-File not properly saved!")
-                traceback.print_exc()  # DEBUG
-            finally:
-                self.loadClistBuffer2UI()
-
-    def clearClistQue(self):
-        # Reset Buffer and Update UI
-        self.StringNetSendListBuffer = []
-        self.loadClistBuffer2UI()
-
-    def sendClistQue(self):
-        try:
-            # Go through all list-elements and buffer them
-            for line in self.ComQueList.get_children():
-                for value in self.ComQueList.item(line)['values']:
-                    print(value)
-                    # Ensure that line is at least a StringNet-Package
-                    package = checkAndExtractStNPackage(value)
-                    if package != None:
-                        GLOBAL_USB_SEND_QUERY.append(
-                            package)  # TODO: Double-Sending NOT eliminated for pracical reasons
-
-                self.statusText.set("Status | C-List queried to USB!")
-        except:
-            self.statusText.set("Error | C-List could not be properly send!")
-            traceback.print_exc()  # DEBUG
-
-    # Manual Package-Entry
-    def manualPackageEntry(self):
-        # Check, buffer and Update UI
-        input = self.manualPackageEntryText.get()
-        if input != "":
-            package = checkAndExtractStNPackage(input)
-            if package != None:
-                self.StringNetSendListBuffer.append(input)  # # input instead of package to make Comments possible
-                self.loadClistBuffer2UI()
-            else:
-                self.statusText.set("Warning | Invalid input!")
-
-    def manualPackageEntryDel(self):
-        # Check for valid selection, delete out of buffer and Update UI
-        try:
-            index2Del = int(self.ComQueList.selection()[0])
-            self.StringNetSendListBuffer.pop(index2Del - 1)
-            self.loadClistBuffer2UI()
-        except:
-            traceback.print_exc()
-            self.statusText.set("Warning | Selection was invalid!")
-
-    def manualPackageEntryEdit(self):
-        # Check for valid selection, copy from buffer to Entry and Update UI
-        try:
-            package = self.manualPackageEntryText.get()
-            if package != "":
-                index2Del = int(self.ComQueList.selection()[0])
-                self.StringNetSendListBuffer[index2Del - 1] = package
-                self.loadClistBuffer2UI()
-        except:
-            traceback.print_exc()
-
-    ## StringNet Object Editor
-    def sendSTENow(self):
-        # Copy all Entrys from Object Editor and Convert 2 StringNetPackage
-        pack = convert2sendablePackage(
-            self.comChooserComboboxTxt.get(),
-            self.subcomChooserComboboxTxt.get(),
-            self.valnumChooserComboboxTxt.get(),
-            self.valstrChooserComboboxTxt.get()
-        )
-
-        # Buffer Package to USB
-        if pack not in GLOBAL_USB_SEND_QUERY:  # eliminate Double-Sending
-            GLOBAL_USB_SEND_QUERY.append(pack)
-
-    def sendSTEQue(self):
-        # Copy all Entrys from Object Editor and Convert 2 StringNetPackage
-        # Update Buffer and UI
-        self.StringNetSendListBuffer.append(convert2sendablePackage(
-            self.comChooserComboboxTxt.get(),
-            self.subcomChooserComboboxTxt.get(),
-            self.valnumChooserComboboxTxt.get(),
-            self.valstrChooserComboboxTxt.get()
-        ))
-        self.loadClistBuffer2UI()
-
-    #### Helper
-    # Settings
-    def loadSettingsFromEntry(self):
-        # Depending on selected Checkmarks the function stores the value of the Entry or uses the old value.
-        self.autostartBridge = self.autostartBridgeCheckVal.get()
-        self.enableMQTTbridge = self.enableGenMQTTBridgeBtnVal.get()
-        self.enableHomieBridge = self.enableHomieBridgeBtnVal.get()
-
-        if self.USBPortCheckVal.get() == 1:
-            self.USB_PORT = self.USBPortEntryVal.get()
-        if self.USBBaudrateCheckVal.get() == 1:
-            self.USB_BAUDRATE = self.USBBaudrateEntryVal.get()
-        if self.USBReadTimeoutCheckVal.get() == 1:
-            self.USB_TIMEOUT = self.USBReadTimeoutEntryVal.get()
-        if self.USBHostCheckVal.get() == 1:
-            self.USB_HOST_NAME = self.USBHostEntryVal.get()
-        if self.MQTTBrokerIPCheckVal.get() == 1:
-            self.MQTT_BROKER_IP = self.MQTTBrokerIPEntryVal.get()
-        if self.MQTTBrokerPortCheckVal.get() == 1:
-            self.MQTT_BROKER_PORT = self.MQTTBrokerPortEntryVal.get()
-        if self.MQTTHomepathCheckVal.get() == 1:
-            self.MQTT_HOMEPATH = self.MQTTHomepathEntryVal.get()
-        if self.USBPortCheckVal.get() == 1:
-            self.MQTT_QOS = self.MQTTQOSEntryVal.get()
-
-    def loadSettingsToEntry(self):
-        # Update all Checks and Entrys from background-buffer
-        self.autostartBridgeCheckVal.set(self.autostartBridge)
-        self.enableGenMQTTBridgeBtnVal.set(self.enableMQTTbridge)
-        self.enableHomieBridgeBtnVal.set(self.enableHomieBridge)
-
-        self.USBPortEntryVal.set(self.USB_PORT)
-        self.USBBaudrateEntryVal.set(self.USB_BAUDRATE)
-        self.USBReadTimeoutEntryVal.set(self.USB_TIMEOUT)
-        self.USBHostEntryVal.set(self.USB_HOST_NAME)
-        self.MQTTBrokerIPEntryVal.set(self.MQTT_BROKER_IP)
-        self.MQTTBrokerPortEntryVal.set(self.MQTT_BROKER_PORT)
-        self.MQTTHomepathEntryVal.set(self.MQTT_HOMEPATH)
-        self.MQTTQOSEntryVal.set(self.MQTT_QOS)
-
-        self.USBPortCheck()
-        self.USBBaudrateCheck()
-        self.USBHostCheck()
-        self.USBReadTimeoutCheck()
-        self.MQTTBrokerIPCheck()
-        self.MQTTBrokerPortCheck()
-        self.MQTTHomepathCheck()
-        self.MQTTQOSCheck()
-
-    # FWE
-    def loadObjectBuffer2UI(self):
-        # Clear list manually
-        try:
-            for item in self.StringNetObjectList.get_children():
-                self.StringNetObjectList.delete(item)
-        except:
-            traceback.print_exc()  # DEBUG
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | loadObjectBuffer2UI() | Clearing failed!")
-
-        # Sort Object-Tree by <dev>/<devtype>/<indexNum>/<InfoObject>/<INFO>
-        try:
-            self.StringNetPackageBuffer.sort()
-            index = 0
-            for line in self.StringNetPackageBuffer:
-                if self.USB_CON_PARTNER not in line:
-                    self.StringNetPackageBuffer.pop(index)
-                else:
-                    index = index + 1
-        except:
-            traceback.print_exc()  # DEBUG
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | loadObjectBuffer2UI() | Sorting failed!")
-
-        # Load Info 2 List
-        try:
-            for line in self.StringNetPackageBuffer:
-                # Extract Information
-                x = line.split("/")
-                lastDev = x[0]
-                lastTyp = x[1]
-                try:
-                    lastNum = int(x[2])
-                except:
-                    lastNum = 0
-                lastObject = x[3]
-                lastStr = x[4]
-
-                # Extract for the Object Editor
-                if lastObject not in self.StringNetInteractionObjectBuffer and lastObject not in COMMANDS:  # TODO: Not working
-                    self.StringNetInteractionObjectBuffer.append(lastObject)
-                if lastNum not in self.StringNetInteractionNumValsBuffer:
-                    self.StringNetInteractionNumValsBuffer.append(lastNum)
-                self.rebuildObjectEditorLists()
-
-                # Insert into UI
-                self.StringNetObjectList.insert(parent="", index=index, iid=index,
-                                                values=(lastDev + "/" + lastTyp, lastObject, str(lastNum), lastStr))
-                index = index + 1  # YES, it does us the previous index-var! It must throw an error if not initialized as well!
-
-            self.statusText.set("Status | Object-List-Updated!")
-        except:
-            traceback.print_exc()  # DEBUG
-            print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | loadObjectBuffer2UI() | Loading failed!")
-
-    def loadClistBuffer2UI(self):
-        # Clear list
-        for item in self.ComQueList.get_children():
-            self.ComQueList.delete(item)
-
-        # Load Info 2 List
-        index = 1
-        for stnPack in self.StringNetSendListBuffer:
-            self.ComQueList.insert(parent="", index=index, iid=index, values=(stnPack, index))
-            index = index + 1
-
-        self.statusText.set("Status | Que-List-Updated!")
-
-    # USB
+    #################### USB #######################
     def testUSBConn(self):
-        if self.USB_CON is None or not self.USB_CON.isOpen():
-            self.USB_OK = False
-            for i in range(1, 30):
-                try:
-                    self.USB_CON = serial.Serial(
-                        port=self.USB_PORT,
-                        baudrate=self.USB_BAUDRATE,
-                        timeout=self.USB_TIMEOUT
-                    )
-                    self.USB_OK = True
+        if self.USB_CON is not None and not self.USB_CON.is_open:
+            self.try2closeUSBConnection()
 
+        try:
+            self.USB_CON = serial.Serial(
+                port=self.USB_PORT,
+                baudrate=self.USB_BAUDRATE,
+                timeout=self.USB_TIMEOUT
+            )
+            time.sleep(5)
+            if self.USB_CON.is_open:
+                logger.info("Establishing USB-Connection was successful!")
+
+                # Say hello to USB
+                for i in range(5):
                     testMsg = "{LIFESIGN;TELLDEV}"
                     try:
-                        print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | testUSBConn() | Sending testwise:",
-                              testMsg)
+                        logger.debug("Sending testwise:" + str(testMsg))
                         self.USB_CON.write(testMsg.encode("UTF-8"))
-                        time.sleep(0.1)  # wait for
-                        print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | testUSBConn() | Answer was:",
-                              self.USB_CON.readline().decode("UTF-8"))
+                        time.sleep(1)  # wait for it
+                        logger.debug("Answer was:" + str(self.USB_CON.readline().decode("UTF-8")))
                     except:
-                        traceback.print_exc()  # DEBUG
-                        print(datetime.now().strftime(
-                            "%d/%m/%Y, %H:%M:%S") + " | testUSBConn() | Garbage received! ... Its fine.")
-                    break
+                        # logger.debug(traceback.print_exc()) # DEBUG-SPAM
+                        logger.debug("Garbage received! But its fine.")
 
-                except:
-                    # traceback.print_exc() # DEBUG
-                    self.statusText.set("Status | Establishing USB-Connection: Try: #" + str(i) + "/30")
-                    for j in range(1, 20):
-                        self.mainwindow.update()
-                        time.sleep(0.05)
+                return True
+        except:
+            logger.debug(traceback.print_exc())  # DEBUG-SPAM
 
-            if not self.USB_OK:
-                self.statusText.set("Error | Not able to setup USB-Connection!")
-                self.toggleUSBConnBtnTxt.set("Connect")
-            else:
-                self.statusText.set("Status | Establishing USB-Connection successful!")
-                self.toggleUSBConnBtnTxt.set("Disconnect")
+        logger.error("Unable to setup USB-Connection!")
+        return False
 
     def processUSBSendBuffer(self):  # Returns whether Package was successfully sent
+        global GLOBAL_USB_SEND_QUERY
+
         if len(GLOBAL_USB_SEND_QUERY) > 0:
             try:
                 self.USB_CON.write(GLOBAL_USB_SEND_QUERY[0].encode("UTF-8"))
-                print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | processUSBSendBuffer() | USB-TX: " + str(
-                    GLOBAL_USB_SEND_QUERY[0]))  # DEBUG
+                logger.debug("USB-TX: " + str(GLOBAL_USB_SEND_QUERY[0]))
                 GLOBAL_USB_SEND_QUERY.pop(0)
-
                 return True
-
             except:
-                traceback.print_exc()  # DEBUG
-                print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | processUSBSendBuffer() | USB-Send-Error!")
-                self.USB_OK = False
+                logger.debug(traceback.print_exc())
+                logger.error("USB-Send-Error!")
 
         return False
 
     def try2closeUSBConnection(self):
         try:
             self.USB_CON.close()
-            self.statusText.set("Status | USB-Connection closed!")
+            logger.info("USB-Connection closed!")
         except:
-            self.statusText.set("Warning | No USB-Connection closable!")
-
-        self.USB_OK = False
-        self.toggleUSBConnBtnTxt.set("Connect")
+            logger.warning("No USB-Connection closable!")
 
     # MQTT-based
     def testMQTTConn(self):
-        try:
-            if self.enableMQTTbridge:
+        if self.enableMQTTbridge:
+            if self.MQTT_CON is not None and not self.MQTT_CON.is_connected:
+                self.try2closeMQTTConnection()
+
+            try:
                 self.MQTT_CON = mqtt.Client()
                 self.MQTT_CON.on_message = genericMQTT_on_message
                 self.MQTT_CON.connect(host=self.MQTT_BROKER_IP, port=self.MQTT_BROKER_PORT, keepalive=self.MQTT_TIMEOUT)
                 self.MQTT_CON.loop_start()
                 self.MQTT_CON.subscribe(topic=(self.MQTT_HOMEPATH + "#"),
                                         qos=self.MQTT_QOS)  # Subscribe to set root-topic
-                self.MQTT_OK = True
-                self.statusText.set(
-                    "Status | Init of Generic MQTT-Bridge successfull! (path: " + self.MQTT_HOMEPATH + "#)")
+                logger.info("Init of Generic MQTT-Bridge successfull! (path: " + self.MQTT_HOMEPATH + "#)")
 
-            if self.enableHomieBridge:
-                self.HOMIE_MQTT_SETTINGS = {
-                    "MQTT_BROKER": self.MQTT_BROKER_IP,
-                    "MQTT_PORT": self.MQTT_BROKER_PORT,
-                    "MQTT_SHARE_CLIENT": True  # limited ressources and many "devices" == objects!
-                    # The root is /homie
-                }
+            except:
+                logger.debug(traceback.print_exc())
+                logger.error("Failed to init Generic MQTT-Bridge!")
 
+        if self.enableHomieBridge:
+            if self.HOMIE_SWITCH_DEVICES is not None:
+                self.HOMIE_SWITCH_DEVICES.close()
+
+            try:
                 # Follow Homie-Conventions
                 devName = self.MQTT_HOMEPATH.replace("/", "")
                 devID = nicefy2HomieID(devName)
@@ -1264,272 +494,293 @@ class StringNetGateway:
                     device_name=devName,
                     mqtt_settings=self.HOMIE_MQTT_SETTINGS
                 )
-                self.MQTT_OK = True
-                self.statusText.set("Status | Init of Homie MQTT-Bridge successfull!")
 
-            if self.MQTT_OK:
-                self.toggleMQTTConnBtnTxt.set("Disconnect")
-            else:
-                self.statusText.set("Warning | No MQTT-Option to init!")
+            except:
+                logger.debug(traceback.print_exc())
+                logger.error("Failed to init Homie!")
 
-        except:
-            traceback.print_exc()
-            self.statusText.set("Error | Failed to init Generic MQTT-Bridge!")
-            self.MQTT_OK = False
+            logger.info("Init of Homie MQTT-Bridge successfull!")
+
+        if (self.MQTT_CON is not None and self.MQTT_CON.is_connected()) or (self.HOMIE_SWITCH_DEVICES is not None):
+            return True
+        else:
+            logger.error("No MQTT-Option to init!")
+            return False
 
     def try2closeMQTTConnection(self):
         if self.enableMQTTbridge:
             try:
                 self.MQTT_CON.loop_stop()  # stops network loop
                 self.MQTT_CON.disconnect()  # disconnect gracefully
-                self.statusText.set("Status | MQTT-Connection closed!")
+                logger.info("MQTT-Connection closed!")
             except:
-                self.statusText.set("Warning | No MQTT-Connection closable!")
+                logger.warning("No MQTT-Connection closable!")
 
         if self.enableHomieBridge:
             try:
                 self.HOMIE_SWITCH_DEVICES.close()
             except:
-                self.statusText.set("Warning | No Homie-Devices closable!")
+                logger.warning("No Homie-Devices closable!")
 
-        self.MQTT_OK = False
-        self.toggleMQTTConnBtnTxt.set("Connect")
+    def EstablishConnections(self):
+        # Retest Connections
+        connectCtr = 0
+        while not self.testUSBConn() and not self.testMQTTConn():
+            connectCtr += 1
+            if connectCtr > 10:
+                logger.error("Unable to establish all connections on try #" + str(connectCtr))
+            time.sleep(5)
+            # yes, endless!
 
-    # Object Editor
-    def rebuildObjectEditorLists(self):
-        # Accesses known viable options for a StringNet-Package
+    def getLine(self):
+        if self.USB_CON is None or not self.USB_CON.is_open:
+            self.testUSBConn()
+            time.sleep(1)
+            return None
+
+        if self.USB_CON.inWaiting == 0:
+            return None
+
         try:
-            self.comChooserCombobox["values"] = ("## SYSTEM ##",) + tuple(COMMANDS) + ("## OBJECTS ##",) + tuple(self.StringNetInteractionObjectBuffer)
-            self.subcomChooserCombobox["values"] = ("## SUBCOMMANDS ##",) + tuple(SUBCOMMANDS) + ("## STATES for Interaction ##",) + tuple(STN_STATES)
-            self.valnumChooserCombobox["values"] = tuple(self.StringNetInteractionNumValsBuffer)
-            self.valstrChooserCombobox["values"] = ("## STATES for Setup ##",) + tuple(STN_STATES)
+            line = self.USB_CON.readline().decode("utf-8")
+        except UnicodeError:  # filter empty lines
+            return None
+        except Exception:  # common USB error
+            logger.debug(traceback.print_exc())
+            logger.error("Trying to regain connection...")
+            self.try2closeUSBConnection()
+            time.sleep(1)
+            self.testUSBConn()
+            return None  # early return
 
-            self.statusText.set("Status | Lists in Object Editor have been updated!")
+        # Check and Process
+        try:
+            line = checkAndExtractStNPackage(line)
         except:
-            traceback.print_exc()
+            logger.debug(traceback.print_exc())
+            logger.error("Error while reading! ")
+            line = None
+
+        if line is None or line == "":
+            logger.debug("Probably nothing to read.")
+            return None
+
+        return line
+
+    def receiveUSB(self):
+        line = self.getLine()
+        if line is None:
+            return
+
+        # Convert and Check for it not being a sys-command
+        logger.debug("USB-RX: " + str(line))
+        strNPackage = convert2StNPackage(line)
+        isValid = True
+        for COMMAND in COMMANDS:  # Only Object - no sys - commands shall pass
+            if COMMAND == strNPackage.Com:
+                isValid = False
+                break
+
+        if not isValid:
+            return
+
+        # Trigger Publish-Events
+        if self.enableMQTTbridge:  # Filters
+            # Packing and Sending Package
+            try:
+                topic = self.MQTT_HOMEPATH + strNPackage.Com + "/" + strNPackage.Subcom
+                message = strNPackage.Val_str
+                self.MQTT_CON.publish(topic, message, self.MQTT_QOS)
+
+                logger.info("GenericMQTT-TX: " + str(line) + "\t" + str(topic) + " " + str(message))
+            except:
+                logger.debug(traceback.print_exc())
+                logger.error("Error while sending Generic MQTT-Paket!")
+                self.try2closeMQTTConnection()
+                time.sleep(1)
+                self.testMQTTConn()
+
+        if not self.enableHomieBridge:
+            return
+
+        # Make Name-Command storeable for Homie and find device in RAM
+        if strNPackage.Com == "NAME":  #
+            strNPackage.Com = strNPackage.Val_str
+
+        nodeName = strNPackage.Com
+        nodeID = nicefy2HomieID(strNPackage.Com)
+
+        if nodeID == "" or nodeName == "":
+            return
+
+        # Search and conditionally add
+        foundDev = False
+        for i in range(1, 2):  # no while to avoid error-loops
+            for node in self.HOMIE_SWITCH_DEVICES.nodes:
+                if node == nodeID:
+                    # If found update state -> Buffer
+                    if strNPackage.Subcom == "STATUS":
+                        try:
+                            self.HOMIE_SWITCH_DEVICES.update_switch(strNPackage.Val_str, nodeID)
+                        except:
+                            logger.debug(traceback.print_exc())
+                            logger.error("Error while updating Homie-Buffer!")
+                    foundDev = True
+                    break
+
+            # Add Device if not existent
+            if not foundDev:
+                self.HOMIE_SWITCH_DEVICES.createNewNode(
+                    node_id=nodeID,
+                    node_name=nodeName
+                )
+                logger.info("Adding " + str(strNPackage.Com) + " to HOMIE_SWITCH_DEVICES")
 
     ### Main Features
-    def USB2MQTT_BRIDGE(self):
-        try:
-            # Check connections
-            try:
-                if not self.USB_CON.isOpen():
-                    self.USB_OK = False
-                    raise ValueError(
-                        datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + '| USB2MQTT_BRIDGE() | USB-Connection broke!')
-                if self.enableMQTTbridge:
-                    if not self.MQTT_CON.is_connected():
-                        self.MQTT_CON = False
-                        raise ValueError(datetime.now().strftime(
-                            "%d/%m/%Y, %H:%M:%S") + '| USB2MQTT_BRIDGE() | MQTT-Connection broke!')
-            except:
-                traceback.print_exc()
+    def BRIDGE(self):
+        global GLOBAL_USB_SEND_QUERY
 
-            if (not self.BRIDGE_KILLSIGNAL) and (self.MQTT_OK or self.USB_OK) and (not self.pauseProcessing):
-                # Homie Regular Discovery
-                if self.enableHomieBridge and (
-                        time.time() - self.HOMIE_DISCOVER_LAST_TIME) > self.HOMIE_DISCOVER_INTERVAL:
-                    self.DISCOVER()
-                    self.HOMIE_DISCOVER_LAST_TIME = time.time()
+        # Send USB
+        self.processUSBSendBuffer()
 
-                # Send USB
-                self.processUSBSendBuffer()
+        # Homie Regular Discovery
+        if (time.time() - self.LAST_DISCOVER) > self.DISCOVER_INTERVAL:
+            GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLALL}")  # to memorize all objects # HARDCODED
+            self.LAST_DISCOVER = time.time()
 
-                # Receive USB Input
-                try:
-                    line = self.USB_CON.readline().decode("UTF-8")
-                except:
-                    # traceback.print_exc()  # DEBUG
-                    # print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | USB-Receive-Error!")
-                    line = ""
+        # Receive USB Input
+        self.receiveUSB()
 
-                try:
-                    # Check and Process
-                    line = checkAndExtractStNPackage(line)
-                    if line != None:
-                        print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | USB-RX: " + str(
-                            line))  # DEBUG
+    ####################################################
 
-                        # Convert and Check for it not being a sys-command
-                        strNPackage = convert2StNPackage(line)
-                        isValid = True
-                        for COMMAND in COMMANDS:  # Only Object - no sys - commands shall pass
-                            if COMMAND == strNPackage.Com:
-                                isValid = False
-                                break
+    ## FWE-Tab
+    def DISCOVER_DETAIL(self):
+        # Issue StringNet-Packages
+        GLOBAL_USB_SEND_QUERY.append("{NAME;TELLDEV}")  # HARDCODED
+        GLOBAL_USB_SEND_QUERY.append("{NETMODE;TELLDEV}")  # HARDCODED
+        GLOBAL_USB_SEND_QUERY.append("{LIFESIGN;TELLDEV}")  # HARDCODED
 
-                        # Trigger Publish-Events
-                        if isValid and self.enableMQTTbridge:  # Filters
-                            # Packing and Sending Package
-                            try:
-                                topic = self.MQTT_HOMEPATH + strNPackage.Com + "/" + strNPackage.Subcom
-                                message = strNPackage.Val_str
-                                self.MQTT_CON.publish(topic, message, self.MQTT_QOS)
+        for i in range(1, 30):  # HARDCODED calculated space for Arduino Nano
+            GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLGPIO;" + str(i) + "}")  # HARDCODED
+            GLOBAL_USB_SEND_QUERY.append("{DISCOVER;TELLRF;" + str(i) + "}")  # HARDCODED
 
-                                print(datetime.now().strftime(
-                                    "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | GenericMQTT-TX: ", line, "\t",
-                                      topic, " ", message)
-                            except:
-                                traceback.print_exc()  # DEBUG
-                                print(datetime.now().strftime(
-                                    "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Error while sending Generic MQTT-Paket!")
-
-                        if isValid and self.enableHomieBridge:
-                            # Make Name-Command storeable for Homie and find device in RAM
-                            try:
-                                if strNPackage.Com == "NAME":  #
-                                    strNPackage.Com = strNPackage.Val_str
-
-                                nodeName = strNPackage.Com
-                                nodeID = nicefy2HomieID(strNPackage.Com)
-
-                                if nodeID != "" and nodeName != "":
-                                    # Search and conditionally add
-                                    foundDev = False
-                                    for i in range(1, 2):  # no while to avoid error-loops
-                                        for node in self.HOMIE_SWITCH_DEVICES.nodes:
-                                            if node == nodeID:
-                                                # If found update state -> Buffer
-                                                if strNPackage.Subcom == "STATUS":
-                                                    self.HOMIE_SWITCH_DEVICES.update_switch(strNPackage.Val_str, nodeID)
-                                                foundDev = True
-                                                break
-
-                                        # Add Device if not existent
-                                        if not foundDev:
-                                            self.HOMIE_SWITCH_DEVICES.createNewNode(
-                                                node_id=nodeID,
-                                                node_name=nodeName
-                                            )
-                                            print(datetime.now().strftime(
-                                                "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Adding " + strNPackage.Com + " to HOMIE_SWITCH_DEVICES")
-                            except:
-                                traceback.print_exc()  # DEBUG
-                                print(datetime.now().strftime(
-                                    "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Error while processing Homie-Buffer!")
-                except:
-                    # traceback.print_exc()  # DEBUG
-                    print(datetime.now().strftime(
-                        "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Error while parsing! Probably nothing to read.")
-
-                # Finishing run and schedule loop
-                self.mainwindow.after(100, self.USB2MQTT_BRIDGE)
-
-            elif self.pauseProcessing:
-                # print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Waiting for next round as bridge is paused!") #DEBUG
-                self.mainwindow.after(100, self.USB2MQTT_BRIDGE)
-            elif self.BRIDGE_KILLSIGNAL:
-                self.statusText.set("Status | Bridge closed! Mind that connections are still active!")
-                print(datetime.now().strftime(
-                    "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Bridge closed with BRIDGE_KILLSIGNAL: ",
-                      str(self.BRIDGE_KILLSIGNAL))
-                self.stopBridge()
+        while True:
+            line = self.getLine()
+            if line is not None:
+                logger.info("USB RX: " + line)
             else:
-                self.statusText.set("Error | Bridge collapsed! Mind that connections are still active!")
-                print(datetime.now().strftime(
-                    "%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | Bridge collapsed with unknwown cause!")
-        except:
-            traceback.print_exc()  # DEBUG
-            self.statusText.set("Error | Bridge closed by force!")
-            self.mainwindow.update()
+                break
+            self.processUSBSendBuffer()
             time.sleep(0.1)
 
-    def FirmwareEditorMode(self):
+    def formatDEV(self):
+        choice = input("\nFormat StringNet-Device?\n"
+            "Are you sure you want to wipe the over USB/StringNet connected devices' configuration ?\n[yes / NO [Enter]]")
+        if choice.lower() == "yes":
+            GLOBAL_USB_SEND_QUERY.append("{FORMAT;;69}")  # HARDCODED MagicNumber
+
+    def loadClistFile(self):
+        filename = "flash.clist"
+        logger.warning("Looking for in '" + filename + "'...")
+
         try:
-            # TODO: Imperformant but neccessary for Raspberry
-            if "arm" in platform.machine():
-                self.mainwindow.update()  # Force to update UI because it freezes
+            # Read all Lines of File and close
+            file = open(filename, encoding='utf-8')
+            lines = file.readlines()
+            file.close()
 
-            # Check connections
-            try:
-                if not self.USB_OK:
-                    if self.UI_State == "F" or self.UI_State != "S":
-                        self.toggleFWEditorUpdate()
-                if not self.USB_CON.isOpen():
-                    self.USB_OK = False
-                    raise ValueError(datetime.now().strftime(
-                        "%d/%m/%Y, %H:%M:%S") + '| FirmwareEditorMode() | USB-Connection broke!')
-            except:
-                traceback.print_exc()  # DEBUG
+            # Iterate through all lines
+            StringNetSendListBuffer = []
+            for line in lines:
+                # Determine, whether Line is commented and shall not be loaded
+                if "#" in line:
+                    if line.find("#") <= line.find("{"):  # if comment is before package
+                        continue
 
-            # Run Routine
-            if self.UI_State == "F" and self.USB_OK and not self.pauseProcessing:
-                # Send USB
-                self.processUSBSendBuffer()
+                # Check for correct Sequences
+                strnPackage = checkAndExtractStNPackage(line)
+                if strnPackage != None:
+                    # Copy Package to Que-List
+                    logger.debug(str(line) + str(strnPackage))
+                    StringNetSendListBuffer.append(line)  # line instead of strnPackage to make Comments possible
 
-                # Receive USB Input
-                try:
-                    line = self.USB_CON.readline().decode("UTF-8")
-                except:
-                    # traceback.print_exc()  # DEBUG
-                    # print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB2MQTT_BRIDGE() | USB-Receive-Error!")
-                    line = ""
+            # Tell success as no error occured
+            logger.warning("C-List-File successfully loaded!")
+            return StringNetSendListBuffer
 
-                try:
-                    line = checkAndExtractStNPackage(line)
-                    if line != None:
-                        print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | FirmwareEditorMode() |",
-                              datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | USB-RX: " + str(line))  # DEBUG
-
-                        # Convert and Extract
-                        strNPackage = convert2StNPackage(line)
-                        valnumstr = f"{strNPackage.Val_num:02d}"  # Important formating to make sorting better!
-
-                        # Konvert to Object-Tree <dev>/<DEV/GP/RF>/<Num>/<InfoObject>/<INFO>
-                        appendable = False
-                        if strNPackage.Com in COMMANDS:  # HARDCODED
-                            # The 3 cases differ in Object-Tree differences
-                            if strNPackage.Subcom == "TELLDEV":
-                                if strNPackage.Com == "NAME":
-                                    self.USB_CON_PARTNER = strNPackage.Val_str
-                                line = self.USB_CON_PARTNER + "/DEV/" + valnumstr + "/" + strNPackage.Com + "/" + strNPackage.Val_str
-                                appendable = True
-                            elif strNPackage.Subcom == "TELLGPIO":
-                                if strNPackage.Val_num >= 1:
-                                    line = self.USB_CON_PARTNER + "/GPIO/" + valnumstr + "/" + strNPackage.Com + "/" + strNPackage.Val_str
-                                    appendable = True
-                            elif strNPackage.Subcom == "TELLRF":
-                                if strNPackage.Val_num >= 1:
-                                    line = self.USB_CON_PARTNER + "/RF/" + valnumstr + "/" + strNPackage.Com + "/" + strNPackage.Val_str
-                                    appendable = True
-                        elif strNPackage.Subcom == "STATUS":
-                            line = self.USB_CON_PARTNER + "/ObjState/" + valnumstr + "/" + strNPackage.Com + "/" + strNPackage.Val_str
-                            appendable = True
-                        else:
-                            line = self.USB_CON_PARTNER + "/undef/" + strNPackage.Com + "/" + strNPackage.Subcom + "+" + valnumstr + "/" + strNPackage.Val_str
-                            appendable = True
-
-                        # If Objecttree is valid and not allready known -> Append
-                        if appendable and line not in self.StringNetPackageBuffer:
-                            # print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | FirmwareEditorMode() | Adding to StringNetObjectbuffer: " + line) #DEBUG
-                            self.StringNetPackageBuffer.append(line)
-                            self.loadObjectBuffer2UI()
-                except:
-                    traceback.print_exc()  # DEBUG
-                    print(datetime.now().strftime(
-                        "%d/%m/%Y, %H:%M:%S") + " | FirmwareEditorMode() | Error while parsing! Probably nothing to read.")
-
-                # Finishing run and schedule loop
-                self.mainwindow.after(100, self.FirmwareEditorMode)
-
-            elif self.pauseProcessing:
-                # print(datetime.now().strftime("%d/%m/%Y, %H:%M:%S") + " | MQTT-FirmwareEditorMode() | Waiting for next round as FWE is paused!") #DEBUG
-                self.mainwindow.after(100, self.FirmwareEditorMode)
-
-            else:
-                self.statusText.set("Status | FWE closed! Mind that connections are still active!")
-                print(datetime.now().strftime(
-                    "%d/%m/%Y, %H:%M:%S") + " | FirmwareEditorMode() | FWE collapsed with UI_State: ",
-                      str(self.UI_State))
         except:
-            traceback.print_exc()  # DEBUG
-            self.statusText.set("Error | FWE closed by force!")
-            self.mainwindow.update()
-            time.sleep(0.1)
+            logger.error("Error | C-List-File not loaded!")
+            return None
+
+    def sendClistQue(self, StringNetSendListBuffer):
+        if StringNetSendListBuffer is None or StringNetSendListBuffer == []:
+            return
+
+        try:
+            # Go through all list-elements and buffer them
+            for line in StringNetSendListBuffer:
+                package = checkAndExtractStNPackage(line)  # Ensure that line is at least a StringNet-Package
+                if package is not None:
+                    GLOBAL_USB_SEND_QUERY.append(package)  # NOTE: Double-Sending NOT eliminated for pracical reasons
+                logger.debug("Got: " + line)
+                logger.debug("Will send: " + package)
+
+                logger.info("C-List queried to USB!")
+        except:
+            logger.error("C-List could not be properly send!")
+            logger.debug(traceback.print_exc())
+
+    def PROGRAMMER(self):
+        logger.error("\nTHe following options are available:\n"
+              "1 - DISCOVER ALL\n"
+              "2 - WRITE CLIST TO DEV\n"
+              "3 - FORMAT DEV\n"
+              "x - EXIT")
+        choice = input("\nPlease choose: ")
+
+        if choice == "1":
+            self.DISCOVER_DETAIL()
+        elif choice == "2":
+            self.sendClistQue(self.loadClistFile())
+            while len(GLOBAL_USB_SEND_QUERY) > 0:
+                self.processUSBSendBuffer()
+                logger.info("Got: " + str(GLOBAL_USB_SEND_QUERY))
+        elif choice == "3":
+            self.formatDEV()
+        elif choice == "x":
+            exit(0)
+
+
+##################################################
 
 if __name__ == '__main__':
-    try:
-        app = StringNetGateway()
-        app.run()
-    except:
-        traceback.print_exc()
+    # Load File
+    app = rf_gateway()
+    app.OpenSettingsFile()
+
+    if app.mode == "BRIDGE":
+        logger.error(aboutprogramm_bridge)
+        if not app.enableHomieBridge and not app.enableMQTTbridge:
+            logger.error("No MQTT-endpoint set! Please correct settings!")
+            exit(1)
+
+        # Run bridge
+        app.EstablishConnections()
+        while True:
+            try:
+                app.BRIDGE()
+            except KeyboardInterrupt:
+                break
+
+        # Close Bridge
+        app.try2closeUSBConnection()
+        app.try2closeMQTTConnection()
+
+    elif app.mode == "PROGRAMMER":
+        logger.error(aboutprogramm_programmer)
+        app.testUSBConn()
+        while True:
+            try:
+                app.PROGRAMMER()
+            except KeyboardInterrupt:
+                break
